@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../models/sale.dart';
+import '../models/sale_item.dart';
 import '../services/db_helper.dart';
 import 'package:intl/intl.dart';
 
@@ -137,15 +138,70 @@ class _ReportsScreenState extends State<ReportsScreen> {
                         final sale = _sales[index];
                         return ListTile(
                           leading: Icon(Icons.monetization_on, color: Colors.green),
-                          title: Text('Venta #${sale.id}'),
+                          title: Text(sale.ticketNumber != null 
+                            ? 'Comanda #${sale.ticketNumber}' 
+                            : 'Venta #${sale.id}'),
                           subtitle: Text(DateFormat('dd/MM/yyyy HH:mm').format(sale.date)),
                           trailing: Text('\$${sale.totalAmount.toStringAsFixed(2)}', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                          onTap: () => _showSaleDetails(sale),
                         );
                       },
                     ),
            )
         ],
       )
+    );
+  }
+
+  void _showSaleDetails(Sale sale) {
+    showModalBottomSheet(
+      context: context,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (context) {
+        return FutureBuilder<List<SaleItem>>(
+          future: DatabaseHelper.instance.getSaleItemsBySaleId(sale.id!),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return Center(child: CircularProgressIndicator());
+            }
+            if (!snapshot.hasData || snapshot.data!.isEmpty) {
+              return Center(child: Text('No hay detalles para esta venta.'));
+            }
+            final items = snapshot.data!;
+            return Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Detalle: ${sale.ticketNumber != null ? 'Comanda #${sale.ticketNumber}' : 'Venta #${sale.id}'}', 
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                  Divider(),
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: items.length,
+                      itemBuilder: (context, index) {
+                        final item = items[index];
+                        return ListTile(
+                          title: Text(item.name),
+                          subtitle: Text('${item.quantity} x \$${item.unitPrice.toStringAsFixed(0)}'),
+                          trailing: Text('\$${item.subtotal.toStringAsFixed(0)}', style: TextStyle(fontWeight: FontWeight.bold)),
+                        );
+                      },
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Text('Total Pagado: \$${sale.totalAmount.toStringAsFixed(0)}', 
+                      style: TextStyle(fontSize: 18, color: Colors.green.shade700, fontWeight: FontWeight.bold)),
+                  )
+                ],
+              ),
+            );
+          },
+        );
+      }
     );
   }
 }

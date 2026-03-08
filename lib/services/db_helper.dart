@@ -24,7 +24,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 3, // Incrementada a 3 para forzar la eliminación de la Coca Cola e inyectar los Alias nuevos
+      version: 4, // Incrementada a V4 para agregar el ticket_number de la comanda manual
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
@@ -45,7 +45,8 @@ class DatabaseHelper {
       CREATE TABLE sales (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         date TEXT NOT NULL,
-        total_amount REAL NOT NULL
+        total_amount REAL NOT NULL,
+        ticket_number TEXT
       )
     ''');
 
@@ -71,8 +72,9 @@ class DatabaseHelper {
   }
 
   Future _upgradeDB(Database db, int oldVersion, int newVersion) async {
-    if (oldVersion < 3) {
+    if (oldVersion < 4) {
       // Borramos las tablas y las volvemos a crear para limpiar datos viejos o cargar nuevos desde initialProducts
+      // Esto también asegura que la tabla sales V4 se cree con la columna ticket_number.
       await db.execute('DROP TABLE IF EXISTS sale_items');
       await db.execute('DROP TABLE IF EXISTS sales');
       await db.execute('DROP TABLE IF EXISTS products');

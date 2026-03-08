@@ -44,11 +44,16 @@ class SaleProvider with ChangeNotifier {
   }
 
   Future<void> saveCurrentSale() async {
+    await saveCurrentSaleWithTicket(null);
+  }
+
+  Future<void> saveCurrentSaleWithTicket(String? ticketNumber) async {
     if (_currentItems.isEmpty) return;
 
     final sale = Sale(
       date: _saleDate ?? DateTime.now(),
       totalAmount: currentTotal,
+      ticketNumber: ticketNumber, // Nuevo soporte
     );
 
     final saleId = await DatabaseHelper.instance.insertSale(sale);

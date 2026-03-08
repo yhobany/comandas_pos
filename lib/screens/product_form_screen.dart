@@ -33,9 +33,17 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     }
   }
 
+  bool _isNewCategory = false;
+
   void _saveForm() {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
+      
+      // Si el usuario eligió 'Nueva Categoría...' pero no escribió nada o solo se quedó con el flag:
+      if (_category == null || _category!.trim().isEmpty || _category == 'Nueva Categoría...') {
+        _category = 'General';
+      }
+
       final productProvider = Provider.of<ProductProvider>(context, listen: false);
 
       if (widget.product == null) {
@@ -60,6 +68,18 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final productProvider = Provider.of<ProductProvider>(context);
+    List<String> categories = productProvider.products
+        .map((p) => p.category ?? 'General')
+        .where((c) => c.isNotEmpty)
+        .toSet()
+        .toList();
+        
+    // Asegurar que la categoría del producto actual esté en la lista para evitar crash del Dropdown
+    if (_category != null && _category!.isNotEmpty && !categories.contains(_category)) {
+      categories.add(_category!);
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.product == null ? 'Nuevo Producto' : 'Editar Producto'),
@@ -106,13 +126,52 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                   _price = double.parse(value!);
                 },
               ),
-              TextFormField(
-                initialValue: _category,
-                decoration: InputDecoration(labelText: 'Categoría (Ej. Limonadas)'),
-                onSaved: (value) {
-                  _category = value;
+              // Selector de Categoría
+              DropdownButtonFormField<String>(
+                value: _category != null && categories.contains(_category) 
+                    ? _category 
+                    : (categories.isNotEmpty ? categories.first : null),
+                decoration: InputDecoration(labelText: 'Categoría'),
+                items: [
+                  ...categories.map((String cat) {
+                    return DropdownMenuItem(value: cat, child: Text(cat));
+                  }).toList(),
+                  DropdownMenuItem(value: 'Nueva Categoría...', child: Text('Nueva Categoría...', style: TextStyle(fontStyle: FontStyle.italic, color: Colors.blueAccent)))
+                ],
+                onChanged: (value) {
+                  setState(() {
+                    _isNewCategory = value == 'Nueva Categoría...';
+                    if (!_isNewCategory) {
+                      _category = value;
+                    } else {
+                      _category = ''; // Limpiar para que escriba la nueva
+                    }
+                  });
                 },
+                validator: (value) => value == null ? 'Seleccione una categoría' : null,
               ),
+              
+              if (_isNewCategory)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8.0, left: 16.0),
+                  child: TextFormField(
+                    decoration: InputDecoration(
+                      labelText: 'Nombre de la Nueva Categoría',
+                      fillColor: Colors.blue.shade50,
+                      filled: true,
+                    ),
+                    onChanged: (value) => _category = value,
+                    validator: (value) {
+                      if (_isNewCategory && (value == null || value.trim().isEmpty)) {
+                        return 'Debe escribir el nombre de la categoría';
+                      }
+                      return null;
+                    },
+                    onSaved: (value) {
+                      if (_isNewCategory) _category = value;
+                    },
+                  ),
+                ),
               TextFormField(
                 initialValue: _aliasKeywords,
                 decoration: InputDecoration(

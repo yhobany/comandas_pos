@@ -5,9 +5,8 @@ import 'package:provider/provider.dart';
 import 'providers/product_provider.dart';
 import 'providers/sale_provider.dart';
 
-// Screens
 import 'screens/product_list_screen.dart';
-import 'screens/scanner_screen.dart';
+import 'screens/pos_screen.dart';
 import 'screens/reports_screen.dart';
 
 void main() {
@@ -43,7 +42,7 @@ class MainDashboardScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Lector de Comandas'),
+        title: Text('Sistema POS de Ventas'),
         centerTitle: true,
       ),
       body: Padding(
@@ -55,10 +54,10 @@ class MainDashboardScreen extends StatelessWidget {
           children: [
             _buildDashboardCard(
               context, 
-              title: 'Escanear Comanda', 
-              icon: Icons.document_scanner, 
+              title: 'Nueva Venta (POS)', 
+              icon: Icons.point_of_sale, 
               color: Colors.orange,
-              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ScannerScreen()))
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PosScreen()))
             ),
             _buildDashboardCard(
               context, 
