@@ -53,36 +53,33 @@ class ComandaParserService {
         }
       }
 
-      // El recibo muestra las filas como: [Pers] [Cantidad] [Producto]
-      // Ejemplo: "1   2 L NATURAL" -> Verde = 2, Amarillo = "L NATURAL"
-      final itemRegex = RegExp(r'^(\d+)\s+(\d+)\s+(.+)');
+      // Soporte para tablas HTML que a veces se extraen de documentos estructurados
+      // Ejemplo: <tr><td id="0-6">1</td><td id="0-7">1</td><td id="0-8">Jarra limonada natural</td></tr>
+      if (line.contains('<td') || line.contains('<tr')) {
+        line = line.replaceAll(RegExp(r'<[^>]*>'), ' '); // Extraer texto puro eliminando etiquetas HTML
+        line = line.trim();
+        line = line.replaceAll(RegExp(r'\s+'), ' '); // Colapsar multiples espacios en uno
+      }
+
+      // El recibo físico y las imágenes del OCR a menudo no leen 3 columnas [Pers] [Cant] [Producto]
+      // Sino que leen 2 [Cant] [Producto] o simplemente [Producto].
+      final itemRegex = RegExp(r'^(\d+)\s+(.+)');
       final match = itemRegex.firstMatch(line);
 
       int quantity = 1;
       String productNameStr = line;
 
       if (match != null) {
-        // match.group(1) es la primer columna (Personas)
-        // match.group(2) es la columna en verde (Cantidad)
-        // match.group(3) es la columna amarilla (Producto)
-        quantity = int.tryParse(match.group(2)!) ?? 1;
-        productNameStr = match.group(3)!.trim();
+         quantity = int.tryParse(match.group(1)!) ?? 1;
+         // Si la cantidad leída es muy alta (ej: 12), probablemente combinó "Pers 1" y "Cant 2"
+         if (quantity > 10) {
+            String qtyStr = quantity.toString();
+            quantity = int.tryParse(qtyStr.substring(qtyStr.length - 1)) ?? 1;
+         }
+         productNameStr = match.group(2)!.trim();
       } else {
-        // Algunas veces el OCR puede comerse el espacio entre Pers y Cantidad: "12 L NATURAL"
-        // Si no cumple el formato estricto, aplicamos regla dura: omitimos la linea o buscamos un solo numero
-        final regexFallback = RegExp(r'^(\d+)\s+(.+)');
-        final matchFB = regexFallback.firstMatch(line);
-        if (matchFB != null) {
-           quantity = int.tryParse(matchFB.group(1)!) ?? 1;
-           // si la cantidad leída es muy alta (ej: 12), probablemente leyó junta "Pers 1 y Cant 2"
-           if (quantity > 10) {
-              String qtyStr = quantity.toString();
-              quantity = int.tryParse(qtyStr.substring(qtyStr.length - 1)) ?? 1;
-           }
-           productNameStr = matchFB.group(2)!.trim();
-        } else {
-           continue; // Si no arranca con número, la descartamos definitivamente (así ignoramos basura/totales)
-        }
+         // Si no tiene número al inicio, no la descartamos. Puede ser el producto solo (ej: "BOLA DE HELADO")
+         productNameStr = line.trim();
       }
 
       if (productNameStr.length < 3) continue;
@@ -95,6 +92,7 @@ class ComandaParserService {
         continue;
       }
       
+      productNameStr = productNameStr.replaceAll(RegExp(r'\$\d+[,\.\d]*'), ''); // Remover precios pegados "$9,500.00"
       productNameStr = productNameStr.replaceAll(RegExp(r'\s+'), ' ');
 
       Product? matchedProduct = _findBestMatch(productNameStr, availableProducts);
@@ -163,6 +161,18 @@ class ComandaParserService {
         // Si el texto del OCR contiene perfectamente el nombre/alias, lo consideramos altamente válido
         if (ocrText.contains(variant) && variant.length >= 4) {
           similarity = similarity < 0.85 ? 0.85 : similarity;
+        }
+
+        // Match parcial flexible pero estricto
+        if (ocrText.length >= 5 && variant.length >= 5) {
+           if (ocrText.contains(variant) || variant.contains(ocrText)) {
+              double minLen = ocrText.length < variant.length ? ocrText.length.toDouble() : variant.length.toDouble();
+              double maxLen2 = ocrText.length > variant.length ? ocrText.length.toDouble() : variant.length.toDouble();
+              
+              if ((maxLen2 / minLen) <= 2.8) { 
+                 similarity = similarity < 0.82 ? 0.82 : similarity;
+              }
+           }
         }
 
         if (similarity > highestSimilarity) {
