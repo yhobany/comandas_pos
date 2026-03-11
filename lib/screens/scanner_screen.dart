@@ -18,6 +18,14 @@ class _ScannerScreenState extends State<ScannerScreen> {
   final OcrService _ocrService = OcrService();
   bool _isLoading = false;
 
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<ProductProvider>(context, listen: false).fetchProducts();
+    });
+  }
+
   Future<void> _processImage(ImageSource source) async {
     final XFile? image = await _picker.pickImage(source: source);
     if (image == null) return;
@@ -33,9 +41,9 @@ class _ScannerScreenState extends State<ScannerScreen> {
       final productProvider = Provider.of<ProductProvider>(context, listen: false);
       
       // Asegurar forzosamente que los productos estén cargados en memoria ANTES de hacer el cruce OCR.
-      // Si el array está vacío, forzamos el await de loadProducts().
+      // Si el array está vacío, forzamos el await de fetchProducts().
       if (productProvider.products.isEmpty) {
-        await productProvider.loadProducts();
+        await productProvider.fetchProducts();
       }
       
       final availableProducts = productProvider.products;
