@@ -30,7 +30,15 @@ class _ScannerScreenState extends State<ScannerScreen> {
       final file = File(image.path);
       final text = await _ocrService.recognizeTextFromImage(file);
       
-      final availableProducts = Provider.of<ProductProvider>(context, listen: false).products;
+      final productProvider = Provider.of<ProductProvider>(context, listen: false);
+      
+      // Asegurar forzosamente que los productos estén cargados en memoria ANTES de hacer el cruce OCR.
+      // Si el array está vacío, forzamos el await de loadProducts().
+      if (productProvider.products.isEmpty) {
+        await productProvider.loadProducts();
+      }
+      
+      final availableProducts = productProvider.products;
       final parsedComanda = await ComandaParserService.parseTextToSaleItems(text, availableProducts);
 
       Provider.of<SaleProvider>(context, listen: false).setCurrentItems(
