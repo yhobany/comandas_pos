@@ -33,7 +33,11 @@ class _ScannerScreenState extends State<ScannerScreen> {
       final availableProducts = Provider.of<ProductProvider>(context, listen: false).products;
       final parsedComanda = await ComandaParserService.parseTextToSaleItems(text, availableProducts);
 
-      Provider.of<SaleProvider>(context, listen: false).setCurrentItems(parsedComanda.items, parsedDate: parsedComanda.date);
+      Provider.of<SaleProvider>(context, listen: false).setCurrentItems(
+        parsedComanda.items, 
+        parsedDate: parsedComanda.date,
+        ticketNumber: parsedComanda.ticketNumber,
+      );
 
       setState(() {
         _isLoading = false;

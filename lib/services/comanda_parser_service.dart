@@ -3,9 +3,10 @@ import '../models/sale_item.dart';
 
 class ParsedComanda {
   final DateTime? date;
+  final String? ticketNumber;
   final List<SaleItem> items;
 
-  ParsedComanda({this.date, required this.items});
+  ParsedComanda({this.date, this.ticketNumber, required this.items});
 }
 
 class ComandaParserService {
@@ -14,6 +15,7 @@ class ComandaParserService {
     final List<SaleItem> items = [];
     final lines = text.split('\n');
     DateTime? receiptDate;
+    String? ticketNumber;
 
     // Busca: 04/03/2026 09:46:00p. m.
     final dateRegex = RegExp(r'(\d{2})/(\d{2})/(\d{4})\s+(\d{1,2}):(\d{2}):(\d{2})\s*([apm\. ]+)', caseSensitive: false);
@@ -39,6 +41,15 @@ class ComandaParserService {
             
             receiptDate = DateTime(year, month, day, hour, minute);
           } catch(e) {}
+        }
+      }
+
+      // Busca: Comanda No. 4
+      if (ticketNumber == null) {
+        final ticketRegex = RegExp(r'Comanda\s+N[o\.]*\s*(\d+)', caseSensitive: false);
+        final ticketMatch = ticketRegex.firstMatch(line);
+        if (ticketMatch != null) {
+          ticketNumber = ticketMatch.group(1);
         }
       }
 
@@ -102,7 +113,7 @@ class ComandaParserService {
       ));
     }
 
-    return ParsedComanda(date: receiptDate, items: items);
+    return ParsedComanda(date: receiptDate, ticketNumber: ticketNumber, items: items);
   }
 
   static int _levenshtein(String s1, String s2) {

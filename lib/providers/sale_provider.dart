@@ -6,17 +6,20 @@ import '../services/db_helper.dart';
 class SaleProvider with ChangeNotifier {
   List<SaleItem> _currentItems = [];
   DateTime? _saleDate;
+  String? _detectedTicketNumber;
 
   List<SaleItem> get currentItems => _currentItems;
   DateTime? get saleDate => _saleDate;
+  String? get detectedTicketNumber => _detectedTicketNumber;
   
   double get currentTotal {
     return _currentItems.fold(0, (sum, item) => sum + item.subtotal);
   }
 
-  void setCurrentItems(List<SaleItem> items, {DateTime? parsedDate}) {
+  void setCurrentItems(List<SaleItem> items, {DateTime? parsedDate, String? ticketNumber}) {
     _currentItems = items;
     _saleDate = parsedDate;
+    _detectedTicketNumber = ticketNumber;
     notifyListeners();
   }
 
@@ -66,6 +69,7 @@ class SaleProvider with ChangeNotifier {
     // Clear after save
     _currentItems.clear();
     _saleDate = null;
+    _detectedTicketNumber = null;
     notifyListeners();
   }
 }

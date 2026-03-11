@@ -6,7 +6,21 @@ import '../models/sale_item.dart';
 import '../models/product.dart';
 import 'product_form_screen.dart';
 
-class ValidationScreen extends StatelessWidget {
+class ValidationScreen extends StatefulWidget {
+  @override
+  _ValidationScreenState createState() => _ValidationScreenState();
+}
+
+class _ValidationScreenState extends State<ValidationScreen> {
+  final TextEditingController _ticketController = TextEditingController();
+  bool _initialized = false;
+  
+  @override
+  void dispose() {
+    _ticketController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -26,6 +40,11 @@ class ValidationScreen extends StatelessWidget {
         builder: (context, saleProvider, child) {
           final items = saleProvider.currentItems;
           
+          if (!_initialized) {
+            _ticketController.text = saleProvider.detectedTicketNumber ?? '';
+            _initialized = true;
+          }
+          
           if (items.isEmpty) {
             return Center(child: Text('No se detectaron productos en la comanda.'));
           }
@@ -35,11 +54,30 @@ class ValidationScreen extends StatelessWidget {
               Container(
                 padding: EdgeInsets.all(16),
                 color: Colors.blue.shade50,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                child: Column(
                   children: [
-                    Text('Total Detectado:', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                    Text('\$${saleProvider.currentTotal.toStringAsFixed(2)}', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.green)),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Total Detectado:', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                        Text('\$${saleProvider.currentTotal.toStringAsFixed(2)}', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.green)),
+                      ],
+                    ),
+                    SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: _ticketController,
+                            decoration: InputDecoration(
+                              labelText: 'Comanda Física N# (Opcional)',
+                              border: OutlineInputBorder(),
+                              prefixIcon: Icon(Icons.receipt),
+                            ),
+                          ),
+                        ),
+                      ],
+                    )
                   ],
                 ),
               ),
@@ -109,7 +147,11 @@ class ValidationScreen extends StatelessWidget {
           ),
           child: Text('CONFIRMAR Y GUARDAR VENTA', style: TextStyle(fontSize: 18, color: Colors.white)),
           onPressed: () async {
-            await Provider.of<SaleProvider>(context, listen: false).saveCurrentSale();
+            // Save the sale with the optionally updated ticket number
+            String? ticketToSave = _ticketController.text.trim();
+            if (ticketToSave.isEmpty) ticketToSave = null;
+            
+            await Provider.of<SaleProvider>(context, listen: false).saveCurrentSaleWithTicket(ticketToSave);
             Navigator.of(context).popUntil((route) => route.isFirst);
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Venta guardada exitosamente')));
           },
