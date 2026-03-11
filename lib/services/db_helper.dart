@@ -24,7 +24,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 4, // Incrementada a V4 para agregar el ticket_number de la comanda manual
+      version: 5, // Incrementada a V5 para forzar la inyección de los nuevos alias y productos OCR
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
@@ -72,9 +72,9 @@ class DatabaseHelper {
   }
 
   Future _upgradeDB(Database db, int oldVersion, int newVersion) async {
-    if (oldVersion < 4) {
-      // Borramos las tablas y las volvemos a crear para limpiar datos viejos o cargar nuevos desde initialProducts
-      // Esto también asegura que la tabla sales V4 se cree con la columna ticket_number.
+    if (oldVersion < 5) {
+      // Borramos las tablas y las volvemos a crear para limpiar datos viejos o cargar nuevos desde initialProducts V5
+      // Esto inyecta los nuevos keywords de búsqueda OCR
       await db.execute('DROP TABLE IF EXISTS sale_items');
       await db.execute('DROP TABLE IF EXISTS sales');
       await db.execute('DROP TABLE IF EXISTS products');
