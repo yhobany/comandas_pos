@@ -23,6 +23,7 @@ class ComandaParserService {
     for (var line in lines) {
       line = line.trim();
       if (line.isEmpty) continue;
+      // print('Parsing line: $line');
 
       if (receiptDate == null) {
         final dateMatch = dateRegex.firstMatch(line);
@@ -51,6 +52,14 @@ class ComandaParserService {
         if (ticketMatch != null) {
           ticketNumber = ticketMatch.group(1);
         }
+      }
+
+      // Soporte para tablas HTML que a veces se extraen de documentos estructurados
+      // Ejemplo: <tr><td id="0-6">1</td><td id="0-7">1</td><td id="0-8">Jarra limonada natural</td></tr>
+      if (line.contains('<td') || line.contains('<tr')) {
+        line = line.replaceAll(RegExp(r'<[^>]*>'), ' '); // Extraer texto puro eliminando etiquetas HTML
+        line = line.trim();
+        line = line.replaceAll(RegExp(r'\s+'), ' '); // Colapsar multiples espacios en uno
       }
 
       // El recibo muestra las filas como: [Pers] [Cantidad] [Producto]
@@ -91,11 +100,14 @@ class ComandaParserService {
       final lowerLine = productNameStr.toLowerCase();
       if (lowerLine.contains('comanda') || lowerLine.contains('total') || 
           lowerLine.contains('efectivo') || lowerLine.contains('cambio') || 
-          lowerLine.contains('fecha')) {
+          lowerLine.contains('fecha') || lowerLine.contains('mesa') || 
+          lowerLine.contains('mesero') || lowerLine.contains('envió') || lowerLine.contains('envio')) {
         continue;
       }
       
       productNameStr = productNameStr.replaceAll(RegExp(r'\s+'), ' ');
+      // Limpiar prefijos fantasma generados por el OCR cuando mezcla cantidad y producto: "1 Jugo de maracuya"
+      productNameStr = productNameStr.replaceFirst(RegExp(r'^\d+\s+'), '');
 
       Product? matchedProduct = _findBestMatch(productNameStr, availableProducts);
 
@@ -163,6 +175,11 @@ class ComandaParserService {
         // Si el texto del OCR contiene perfectamente el nombre/alias, lo consideramos altamente válido
         if (ocrText.contains(variant) && variant.length >= 4) {
           similarity = similarity < 0.85 ? 0.85 : similarity;
+        }
+
+        // Si la frase extraída está totalmente contenida en la variante o viceversa, potenciar:
+        if ((ocrText.contains(variant) || variant.contains(ocrText)) && (variant.length > 4)) {
+           similarity = similarity < 0.80 ? 0.80 : similarity;
         }
 
         if (similarity > highestSimilarity) {
