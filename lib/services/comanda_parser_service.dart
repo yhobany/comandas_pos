@@ -62,36 +62,25 @@ class ComandaParserService {
         line = line.replaceAll(RegExp(r'\s+'), ' '); // Colapsar multiples espacios en uno
       }
 
-      // El recibo muestra las filas como: [Pers] [Cantidad] [Producto]
-      // Ejemplo: "1   2 L NATURAL" -> Verde = 2, Amarillo = "L NATURAL"
-      final itemRegex = RegExp(r'^(\d+)\s+(\d+)\s+(.+)');
+      // El recibo físico y las imágenes del OCR a menudo no leen 3 columnas [Pers] [Cant] [Producto]
+      // Sino que leen 2 [Cant] [Producto] o simplemente [Producto].
+      final itemRegex = RegExp(r'^(\d+)\s+(.+)');
       final match = itemRegex.firstMatch(line);
 
       int quantity = 1;
       String productNameStr = line;
 
       if (match != null) {
-        // match.group(1) es la primer columna (Personas)
-        // match.group(2) es la columna en verde (Cantidad)
-        // match.group(3) es la columna amarilla (Producto)
-        quantity = int.tryParse(match.group(2)!) ?? 1;
-        productNameStr = match.group(3)!.trim();
+         quantity = int.tryParse(match.group(1)!) ?? 1;
+         // Si la cantidad leída es muy alta (ej: 12), probablemente combinó "Pers 1" y "Cant 2"
+         if (quantity > 10) {
+            String qtyStr = quantity.toString();
+            quantity = int.tryParse(qtyStr.substring(qtyStr.length - 1)) ?? 1;
+         }
+         productNameStr = match.group(2)!.trim();
       } else {
-        // Algunas veces el OCR puede comerse el espacio entre Pers y Cantidad: "12 L NATURAL"
-        // Si no cumple el formato estricto, aplicamos regla dura: omitimos la linea o buscamos un solo numero
-        final regexFallback = RegExp(r'^(\d+)\s+(.+)');
-        final matchFB = regexFallback.firstMatch(line);
-        if (matchFB != null) {
-           quantity = int.tryParse(matchFB.group(1)!) ?? 1;
-           // si la cantidad leída es muy alta (ej: 12), probablemente leyó junta "Pers 1 y Cant 2"
-           if (quantity > 10) {
-              String qtyStr = quantity.toString();
-              quantity = int.tryParse(qtyStr.substring(qtyStr.length - 1)) ?? 1;
-           }
-           productNameStr = matchFB.group(2)!.trim();
-        } else {
-           continue; // Si no arranca con número, la descartamos definitivamente (así ignoramos basura/totales)
-        }
+         // Si no tiene número al inicio, no la descartamos. Puede ser el producto solo (ej: "BOLA DE HELADO")
+         productNameStr = line.trim();
       }
 
       if (productNameStr.length < 3) continue;
@@ -105,6 +94,7 @@ class ComandaParserService {
         continue;
       }
       
+      productNameStr = productNameStr.replaceAll(RegExp(r'\$\d+[,\.\d]*'), ''); // Remover precios como "$9,500.00"
       productNameStr = productNameStr.replaceAll(RegExp(r'\s+'), ' ');
       // Limpiar prefijos fantasma generados por el OCR cuando mezcla cantidad y producto: "1 Jugo de maracuya"
       productNameStr = productNameStr.replaceFirst(RegExp(r'^\d+\s+'), '');
@@ -177,9 +167,18 @@ class ComandaParserService {
           similarity = similarity < 0.85 ? 0.85 : similarity;
         }
 
-        // Si la frase extraída está totalmente contenida en la variante o viceversa, potenciar:
-        if ((ocrText.contains(variant) || variant.contains(ocrText)) && (variant.length > 4)) {
-           similarity = similarity < 0.80 ? 0.80 : similarity;
+        // Match parcial flexible pero estricto (no aceptar palabras sueltas como "lavado" o "natural" para machear TODO el nombre)
+        // Ejemplo: "ARTESANAL CON CAFE" sí macthea con "artesanal con cafe brown..."
+        if (ocrText.length > 5 && variant.length > 5) {
+           if (ocrText.contains(variant) || variant.contains(ocrText)) {
+              // Evaluar la proporción de tamaño para evitar que "natural" (7chars) sea igual que "artesanal con cafe brown con castillo natural" (47chars)
+              double minLen = ocrText.length < variant.length ? ocrText.length.toDouble() : variant.length.toDouble();
+              double maxLen2 = ocrText.length > variant.length ? ocrText.length.toDouble() : variant.length.toDouble();
+              
+              if ((maxLen2 / minLen) <= 2.5) { 
+                 similarity = similarity < 0.80 ? 0.80 : similarity;
+              }
+           }
         }
 
         if (similarity > highestSimilarity) {
