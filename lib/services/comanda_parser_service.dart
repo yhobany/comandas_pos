@@ -17,6 +17,21 @@ class ComandaParserService {
     DateTime? receiptDate;
     String? ticketNumber;
 
+    // --- FASE 14 EXTRACTION FLUIDA (Global Multiline) ---
+    // El texto OCR de Galería viene fragmentado. Ej: "Comanda No.\nMesero\nEvio\n36"
+    // Busca la palabra Comanda, atraviesa el ruido, y captura el primer número "huérfano" que le siga.
+    final globalTicketRegex = RegExp(r'Comanda[\s\S]*?\n\s*([0-9]{2,5})\s*\n', caseSensitive: false);
+    final globalTicketMatch = globalTicketRegex.firstMatch(text);
+    if (globalTicketMatch != null) {
+      ticketNumber = globalTicketMatch.group(1);
+    } else {
+      // Fallback si por azar la comanda es 1 solo dígito (ej: "3") y falló la anterior
+      final fallbackTicketRegex = RegExp(r'Comanda[\s\S]*?\n\s*([0-9]{1})\s*\n', caseSensitive: false);
+      final fallbackMatch = fallbackTicketRegex.firstMatch(text);
+      if (fallbackMatch != null) ticketNumber = fallbackMatch.group(1);
+    }
+    // ----------------------------------------------------
+
     // Busca: 04/03/2026 09:46:00p. m.
     final dateRegex = RegExp(r'(\d{2})/(\d{2})/(\d{4})\s+(\d{1,2}):(\d{2}):(\d{2})\s*([apm\. ]+)', caseSensitive: false);
     
