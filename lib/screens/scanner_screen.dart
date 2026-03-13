@@ -75,9 +75,29 @@ class _ScannerScreenState extends State<ScannerScreen> {
 
       // Navigate to validation screen
       if (mounted) {
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (context) => ValidationScreen()),
+        // --- INICIO MODO DEBUG (Fase 13) ---
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (ctx) => AlertDialog(
+            title: Text('🔍 OCR Debugador (Solo Galería)'),
+            content: SingleChildScrollView(
+              child: SelectableText(text), // Muestra el texto entero para que el dev pueda analizarlo o copiarlo
+            ),
+            actions: [
+              ElevatedButton(
+                child: Text('Continuar a Validación'),
+                onPressed: () {
+                  Navigator.of(ctx).pop();
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (context) => ValidationScreen()),
+                  );
+                },
+              )
+            ],
+          )
         );
+        // --- FIN MODO DEBUG ---
       }
     } catch (e) {
       setState(() {

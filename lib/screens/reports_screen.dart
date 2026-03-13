@@ -74,7 +74,16 @@ class _ReportsScreenState extends State<ReportsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Reporte de Ventas')),
+      appBar: AppBar(
+        title: Text('Reporte de Ventas'),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.delete_sweep, color: Colors.grey.shade400),
+            tooltip: 'Borrar historial (Pruebas)',
+            onPressed: _confirmDeleteAllSales,
+          )
+        ],
+      ),
       body: Column(
         children: [
            Padding(
@@ -153,6 +162,32 @@ class _ReportsScreenState extends State<ReportsScreen> {
                     ),
            )
         ],
+      )
+    );
+  }
+
+  void _confirmDeleteAllSales() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('⚠️ Peligro: Limpiar BD', style: TextStyle(color: Colors.red)),
+        content: Text('¿Desea purgar todo el historial de ventas? Esto NO afectará al catálogo de productos. Úselo solo para limpiar el entorno de pruebas.'),
+        actions: [
+          TextButton(
+            child: Text('Cancelar'),
+            onPressed: () => Navigator.of(ctx).pop(),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: Text('Purgar Ventas', style: TextStyle(color: Colors.white)),
+            onPressed: () async {
+              Navigator.of(ctx).pop();
+              await DatabaseHelper.instance.deleteAllSales();
+              _loadSales(); // Refrescar pantalla
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('🗑️ Historial de ventas purgado con éxito.')));
+            },
+          )
+        ]
       )
     );
   }

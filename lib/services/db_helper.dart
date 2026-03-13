@@ -148,6 +148,13 @@ class DatabaseHelper {
     return result.map((json) => Sale.fromMap(json)).toList();
   }
 
+  // --- Utility for Testing (Fase 13) ---
+  Future<void> deleteAllSales() async {
+    final db = await instance.database;
+    await db.delete('sale_items'); // Delete items first to respect foreign keys even though cascade is on
+    await db.delete('sales');
+  }
+
   // --- Sale Items ---
   Future<int> insertSaleItem(SaleItem item) async {
     final db = await instance.database;
