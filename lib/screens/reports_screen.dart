@@ -139,8 +139,8 @@ class _ReportsScreenState extends State<ReportsScreen> {
                         return ListTile(
                           leading: Icon(Icons.monetization_on, color: Colors.green),
                           title: Text(sale.ticketNumber != null 
-                            ? 'Comanda #${sale.ticketNumber}' 
-                            : 'Venta #${sale.id}'),
+                            ? 'Comanda N°${sale.ticketNumber}' 
+                            : 'Comanda N°${sale.id}'),
                           subtitle: Text(DateFormat('dd/MM/yyyy HH:mm').format(sale.date)),
                           trailing: Text('\$${sale.totalAmount.toStringAsFixed(2)}', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                           onTap: () => _showSaleDetails(sale),
@@ -174,7 +174,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Detalle: ${sale.ticketNumber != null ? 'Comanda #${sale.ticketNumber}' : 'Venta #${sale.id}'}', 
+                  Text('Detalle: ${sale.ticketNumber != null ? 'Comanda N°${sale.ticketNumber}' : 'Comanda N°${sale.id}'}', 
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                   Divider(),
                   Expanded(

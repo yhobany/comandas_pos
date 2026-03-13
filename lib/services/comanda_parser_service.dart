@@ -44,9 +44,9 @@ class ComandaParserService {
         }
       }
 
-      // Busca estrechamente: Comanda N°. 3 tolerando símbolos de grados distorsionados por MLKit
+      // Busca de forma resiliente: "Comanda N°. 3" ignorando todo el ruido ('N', '°', '.', espacios) entre la palabra y el número
       if (ticketNumber == null) {
-        final ticketRegex = RegExp(r'Comanda\s+N[°º\*\.\-o0]*\s*[\.\-]*\s*(\d+)', caseSensitive: false);
+        final ticketRegex = RegExp(r'Comanda[^\d]*(\d+)', caseSensitive: false);
         final ticketMatch = ticketRegex.firstMatch(line);
         if (ticketMatch != null) {
           ticketNumber = ticketMatch.group(1);
