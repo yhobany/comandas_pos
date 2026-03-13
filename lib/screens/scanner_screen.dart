@@ -6,6 +6,7 @@ import '../providers/product_provider.dart';
 import '../providers/sale_provider.dart';
 import '../services/ocr_service.dart';
 import '../services/comanda_parser_service.dart';
+import '../services/auto_crop_service.dart';
 import 'validation_screen.dart';
 
 class ScannerScreen extends StatefulWidget {
@@ -16,7 +17,9 @@ class ScannerScreen extends StatefulWidget {
 class _ScannerScreenState extends State<ScannerScreen> {
   final ImagePicker _picker = ImagePicker();
   final OcrService _ocrService = OcrService();
+  final AutoCropService _cropService = AutoCropService();
   bool _isLoading = false;
+  String _loadingMessage = 'Procesando imagen con ML Kit...';
 
   @override
   void initState() {
@@ -32,11 +35,22 @@ class _ScannerScreenState extends State<ScannerScreen> {
 
     setState(() {
       _isLoading = true;
+      _loadingMessage = 'Recortando recibo del fondo oscuro...';
     });
 
     try {
-      final file = File(image.path);
-      final text = await _ocrService.recognizeTextFromImage(file);
+      final originalFile = File(image.path);
+      final croppedFile = await _cropService.cropReceiptFromDarkBackground(originalFile);
+      
+      setState(() {
+         _loadingMessage = 'Extrayendo texto con ML Kit...';
+      });
+      
+      final text = await _ocrService.recognizeTextFromImage(croppedFile);
+      
+      setState(() {
+         _loadingMessage = 'Cruzando productos en catálogo...';
+      });
       
       final productProvider = Provider.of<ProductProvider>(context, listen: false);
       
@@ -90,7 +104,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
                 children: [
                   CircularProgressIndicator(),
                   SizedBox(height: 16),
-                  Text('Procesando imagen con ML Kit y haciendo Fuzzy Match...')
+                  Text(_loadingMessage)
                 ],
               )
             : Column(

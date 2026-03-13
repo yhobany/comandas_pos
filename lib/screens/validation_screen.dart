@@ -138,23 +138,25 @@ class _ValidationScreenState extends State<ValidationScreen> {
           );
         },
       ),
-      bottomNavigationBar: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            padding: EdgeInsets.symmetric(vertical: 16),
-            backgroundColor: Colors.green,
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 24.0),
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              padding: EdgeInsets.symmetric(vertical: 16),
+              backgroundColor: Colors.green,
+            ),
+            child: Text('CONFIRMAR Y GUARDAR VENTA', style: TextStyle(fontSize: 18, color: Colors.white)),
+            onPressed: () async {
+              // Save the sale with the optionally updated ticket number
+              String? ticketToSave = _ticketController.text.trim();
+              if (ticketToSave.isEmpty) ticketToSave = null;
+              
+              await Provider.of<SaleProvider>(context, listen: false).saveCurrentSaleWithTicket(ticketToSave);
+              Navigator.of(context).popUntil((route) => route.isFirst);
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Venta guardada exitosamente')));
+            },
           ),
-          child: Text('CONFIRMAR Y GUARDAR VENTA', style: TextStyle(fontSize: 18, color: Colors.white)),
-          onPressed: () async {
-            // Save the sale with the optionally updated ticket number
-            String? ticketToSave = _ticketController.text.trim();
-            if (ticketToSave.isEmpty) ticketToSave = null;
-            
-            await Provider.of<SaleProvider>(context, listen: false).saveCurrentSaleWithTicket(ticketToSave);
-            Navigator.of(context).popUntil((route) => route.isFirst);
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Venta guardada exitosamente')));
-          },
         ),
       ),
     );
