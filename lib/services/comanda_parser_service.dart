@@ -17,18 +17,23 @@ class ComandaParserService {
     DateTime? receiptDate;
     String? ticketNumber;
 
-    // --- FASE 14 EXTRACTION FLUIDA (Global Multiline) ---
-    // El texto OCR de Galería viene fragmentado. Ej: "Comanda No.\nMesero\nEvio\n36"
-    // Busca la palabra Comanda, atraviesa el ruido, y captura el primer número "huérfano" que le siga.
-    final globalTicketRegex = RegExp(r'Comanda[\s\S]*?\n\s*([0-9]{2,5})\s*\n', caseSensitive: false);
-    final globalTicketMatch = globalTicketRegex.firstMatch(text);
-    if (globalTicketMatch != null) {
-      ticketNumber = globalTicketMatch.group(1);
-    } else {
-      // Fallback si por azar la comanda es 1 solo dígito (ej: "3") y falló la anterior
-      final fallbackTicketRegex = RegExp(r'Comanda[\s\S]*?\n\s*([0-9]{1})\s*\n', caseSensitive: false);
-      final fallbackMatch = fallbackTicketRegex.firstMatch(text);
-      if (fallbackMatch != null) ticketNumber = fallbackMatch.group(1);
+    // --- FASE 14 EXTRACTION RAZONADA (Anti-Espacios y Ruido OCR) ---
+    // En las imágenes, el texto de la Comanda N° puede separarse excesivamente 
+    // por largos espacios en blanco o tabulaciones artificiales antes de toparse con el dígito (Ej: "Comanda No.            3").
+    // 1. Purificamos el texto eliminando horas o fechas para que no atrape números erróneos.
+    var cleanText = text.replaceAll(RegExp(r'\d{1,2}:\d{2}:\d{2}[a-zA-Z\. ]*'), ' '); // Quitar horas con am/pm
+    cleanText = cleanText.replaceAll(RegExp(r'\d{1,2}/\d{1,2}/\d{4}'), ' '); // Quitar fechas
+    cleanText = cleanText.replaceAll(RegExp(r'\d{1,2}\s+\d{1,2}\s+\d{4}\s+\d{1,2}\s+\d{1,2}\s+\d{1,2}[a-zA-Z\. ]*'), ' '); // Quitar fechas sin barras "07 03 2026 06 10 00p m"
+    
+    // 2. Reemplazamos saltos de línea y tabulaciones para que la expresión opere horizontalmente.
+    final horizontalText = cleanText.replaceAll('\n', '  ').replaceAll('\r', ' ');
+    
+    // 3. Buscamos "Comanda", nos saltamos palabras basura y extraemos el primer grupo numérico aislado.
+    final ticketRegex = RegExp(r'Comanda(?:(?!\b\d{1,5}\b).)*?\b(\d{1,5})\b', caseSensitive: false);
+    final ticketMatch = ticketRegex.firstMatch(horizontalText);
+    
+    if (ticketMatch != null) {
+      ticketNumber = ticketMatch.group(1);
     }
     // ----------------------------------------------------
 
