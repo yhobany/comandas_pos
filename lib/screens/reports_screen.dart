@@ -140,7 +140,11 @@ class _ReportsScreenState extends State<ReportsScreen> {
                           leading: Icon(Icons.monetization_on, color: Colors.green),
                           title: Text(sale.ticketNumber != null 
                             ? 'Comanda N°${sale.ticketNumber}' 
-                            : 'Comanda N°${sale.id}'),
+                            : 'Sin Comanda (Ref: V-${sale.id})',
+                            style: TextStyle(
+                              color: sale.ticketNumber == null ? Colors.red : Colors.black,
+                              fontWeight: sale.ticketNumber == null ? FontWeight.bold : FontWeight.normal,
+                            )),
                           subtitle: Text(DateFormat('dd/MM/yyyy HH:mm').format(sale.date)),
                           trailing: Text('\$${sale.totalAmount.toStringAsFixed(2)}', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                           onTap: () => _showSaleDetails(sale),
@@ -174,8 +178,8 @@ class _ReportsScreenState extends State<ReportsScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Detalle: ${sale.ticketNumber != null ? 'Comanda N°${sale.ticketNumber}' : 'Comanda N°${sale.id}'}', 
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                  Text(sale.ticketNumber != null ? 'Comanda N°${sale.ticketNumber}' : 'Venta sin Comanda Física (Ref: V-${sale.id})', 
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: sale.ticketNumber == null ? Colors.red : Colors.black)),
                   Divider(),
                   Expanded(
                     child: ListView.builder(

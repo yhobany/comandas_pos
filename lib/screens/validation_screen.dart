@@ -69,15 +69,30 @@ class _ValidationScreenState extends State<ValidationScreen> {
                         Expanded(
                           child: TextField(
                             controller: _ticketController,
+                            keyboardType: TextInputType.number,
+                            onChanged: (val) {
+                               setState(() {}); // Forzar repintado para evaluar obligatoriedad 
+                            },
                             decoration: InputDecoration(
-                              labelText: 'Comanda Física N# (Opcional)',
+                              labelText: 'Comanda Física N# (OBLIGATORIA)',
                               border: OutlineInputBorder(),
                               prefixIcon: Icon(Icons.receipt),
                             ),
                           ),
                         ),
                       ],
-                    )
+                    ),
+                    if (saleProvider.detectedTicketNumber == null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8.0),
+                        child: Row(
+                          children: [
+                            Icon(Icons.warning, color: Colors.orange, size: 20),
+                            SizedBox(width: 8),
+                            Expanded(child: Text('El OCR no detectó el número. Ingréselo manualmente.', style: TextStyle(color: Colors.orange.shade800, fontWeight: FontWeight.bold, fontSize: 12))),
+                          ],
+                        ),
+                      )
                   ],
                 ),
               ),
@@ -148,13 +163,21 @@ class _ValidationScreenState extends State<ValidationScreen> {
             ),
             child: Text('CONFIRMAR Y GUARDAR VENTA', style: TextStyle(fontSize: 18, color: Colors.white)),
             onPressed: () async {
-              // Save the sale with the optionally updated ticket number
+              // Validar estrepitosamente que no se guarde una venta sin comanda física adjunta
               String? ticketToSave = _ticketController.text.trim();
-              if (ticketToSave.isEmpty) ticketToSave = null;
+              if (ticketToSave.isEmpty) {
+                 ScaffoldMessenger.of(context).showSnackBar(
+                   SnackBar(
+                     content: Text('⚠️ ERROR: Debe ingresar el número de la Comanda antes de guardar'),
+                     backgroundColor: Colors.red,
+                   )
+                 );
+                 return; // Abortar guardado
+              }
               
               await Provider.of<SaleProvider>(context, listen: false).saveCurrentSaleWithTicket(ticketToSave);
               Navigator.of(context).popUntil((route) => route.isFirst);
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Venta guardada exitosamente')));
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Venta guardada exitosamente'), backgroundColor: Colors.green));
             },
           ),
         ),
