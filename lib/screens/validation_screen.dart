@@ -200,9 +200,9 @@ class _ValidationScreenState extends State<ValidationScreen> {
           actions: [
             TextButton(
               child: Text('Crear en Catálogo'),
-              onPressed: () {
+              onPressed: () async {
                 Navigator.of(ctx).pop();
-                Navigator.of(context).push(
+                final result = await Navigator.of(context).push(
                   MaterialPageRoute(
                     builder: (context) => ProductFormScreen(
                       product: Product(
@@ -212,9 +212,30 @@ class _ValidationScreenState extends State<ValidationScreen> {
                       )
                     ),
                   ),
-                ).then((_) {
-                  // Actually, after creating a product we should probably trigger a refresh
-                });
+                );
+
+                if (result != null && result is Product) {
+                  // Si se creó con éxito, vinculamos el ítem de la venta actual al nuevo producto
+                  final updatedItem = SaleItem(
+                    id: item.id,
+                    saleId: item.saleId,
+                    productId: result.id,
+                    name: result.name, // Usar el nombre oficial guardado
+                    quantity: item.quantity,
+                    unitPrice: result.price, // Usar el precio oficial guardado
+                    subtotal: item.quantity * result.price,
+                    rawOcrText: item.rawOcrText,
+                  );
+                  
+                  Provider.of<SaleProvider>(context, listen: false).updateItem(index, updatedItem);
+                  
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('✅ Ítem vinculado al catálogo: ${result.name}'),
+                      backgroundColor: Colors.green,
+                    )
+                  );
+                }
               },
             ),
             TextButton(
