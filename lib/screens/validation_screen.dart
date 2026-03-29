@@ -110,7 +110,7 @@ class _ValidationScreenState extends State<ValidationScreen> {
                                   Expanded(
                                     child: Text(
                                       (saleProvider.saleDate != null)
-                                          ? "\${saleProvider.saleDate!.day.toString().padLeft(2, '0')}/\${saleProvider.saleDate!.month.toString().padLeft(2, '0')}/\${saleProvider.saleDate!.year}"
+                                          ? "${saleProvider.saleDate!.day.toString().padLeft(2, '0')}/${saleProvider.saleDate!.month.toString().padLeft(2, '0')}/${saleProvider.saleDate!.year}"
                                           : 'Hoy',
                                       style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                                       overflow: TextOverflow.ellipsis,
