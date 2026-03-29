@@ -202,13 +202,18 @@ class _ValidationScreenState extends State<ValidationScreen> {
               child: Text('Crear en Catálogo'),
               onPressed: () async {
                 Navigator.of(ctx).pop();
+                
+                // Si el ítem es desconocido, usamos el OCR crudo para el formulario. 
+                // Si es un ítem ya en catálogo que el usuario quiere duplicar/recrear, usamos rawOcrText también si está disponible.
+                String defaultName = item.rawOcrText ?? item.name;
+                
                 final result = await Navigator.of(context).push(
                   MaterialPageRoute(
                     builder: (context) => ProductFormScreen(
                       product: Product(
-                        name: item.name, 
+                        name: defaultName, 
                         price: item.unitPrice, 
-                        aliasKeywords: item.name // Set the OCR text as an alias
+                        aliasKeywords: defaultName
                       )
                     ),
                   ),
