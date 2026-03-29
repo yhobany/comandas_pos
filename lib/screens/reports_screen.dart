@@ -52,6 +52,13 @@ class _ReportsScreenState extends State<ReportsScreen> {
     setState(() => _isLoading = false);
   }
 
+  Future<void> _loadSalesWithoutResettingDate() async {
+    setState(() => _isLoading = true);
+    _sales = await DatabaseHelper.instance.getSalesByDateRange(_startDate, _endDate);
+    _totalAmount = _sales.fold(0, (sum, sale) => sum + sale.totalAmount);
+    setState(() => _isLoading = false);
+  }
+
   Future<void> _pickDateRange() async {
     final DateTimeRange? picked = await showDateRangePicker(
       context: context,
@@ -114,7 +121,37 @@ class _ReportsScreenState extends State<ReportsScreen> {
                ),
              ),
            ),
-           if (_filter == 'Personalizado')
+           if (_filter == 'Diario')
+             Row(
+               mainAxisAlignment: MainAxisAlignment.center,
+               children: [
+                 IconButton(
+                   icon: Icon(Icons.chevron_left),
+                   onPressed: () {
+                     setState(() {
+                       _startDate = _startDate.subtract(Duration(days: 1));
+                       _endDate = DateTime(_startDate.year, _startDate.month, _startDate.day, 23, 59, 59);
+                     });
+                     _loadSalesWithoutResettingDate();
+                   },
+                 ),
+                 Text(
+                   DateFormat('dd/MM/yyyy').format(_startDate),
+                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                 ),
+                 IconButton(
+                   icon: Icon(Icons.chevron_right),
+                   onPressed: () {
+                     setState(() {
+                       _startDate = _startDate.add(Duration(days: 1));
+                       _endDate = DateTime(_startDate.year, _startDate.month, _startDate.day, 23, 59, 59);
+                     });
+                     _loadSalesWithoutResettingDate();
+                   },
+                 ),
+               ],
+             )
+           else if (_filter == 'Personalizado')
              Text(
                '${DateFormat('dd/MM/yyyy').format(_startDate)} - ${DateFormat('dd/MM/yyyy').format(_endDate)}',
                style: TextStyle(fontStyle: FontStyle.italic, color: Colors.grey),

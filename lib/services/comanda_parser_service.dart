@@ -117,15 +117,16 @@ class ComandaParserService {
 
       Product? matchedProduct = _findBestMatch(productNameStr, availableProducts);
 
-      // Si no es un match exacto, lo agregamos como artículo desconocido (productId = null).
-      // ValidationScreen se encargará de mostrarle al usuario que no está en el catálogo (isUnknown = true).
+      // Restauramos la regla estricta: si no hay match claro, descartamos la basura.
+      if (matchedProduct == null) continue;
+
       items.add(SaleItem(
         saleId: 0,
-        productId: matchedProduct?.id,
-        name: matchedProduct?.name ?? productNameStr, 
+        productId: matchedProduct.id,
+        name: matchedProduct.name, 
         quantity: quantity,
-        unitPrice: matchedProduct?.price ?? 0.0,
-        subtotal: (matchedProduct?.price ?? 0.0) * quantity,
+        unitPrice: matchedProduct.price,
+        subtotal: matchedProduct.price * quantity,
         rawOcrText: line,
       ));
     }

@@ -67,6 +67,7 @@ class _ValidationScreenState extends State<ValidationScreen> {
                     Row(
                       children: [
                         Expanded(
+                          flex: 3,
                           child: TextField(
                             controller: _ticketController,
                             keyboardType: TextInputType.number,
@@ -74,9 +75,49 @@ class _ValidationScreenState extends State<ValidationScreen> {
                                setState(() {}); // Forzar repintado para evaluar obligatoriedad 
                             },
                             decoration: InputDecoration(
-                              labelText: 'Comanda Física N# (OBLIGATORIA)',
+                              labelText: 'Comanda N# (OBLIGATORIA)',
                               border: OutlineInputBorder(),
                               prefixIcon: Icon(Icons.receipt),
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: 8),
+                        Expanded(
+                          flex: 2,
+                          child: InkWell(
+                            onTap: () async {
+                              final current = saleProvider.saleDate ?? DateTime.now();
+                              final picked = await showDatePicker(
+                                context: context,
+                                initialDate: current,
+                                firstDate: DateTime(2020),
+                                lastDate: DateTime.now().add(Duration(days: 365)),
+                              );
+                              if (picked != null) {
+                                saleProvider.setSaleDate(picked);
+                              }
+                            },
+                            child: Container(
+                              padding: EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+                              decoration: BoxDecoration(
+                                border: Border.all(color: Colors.grey),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.calendar_month, size: 20, color: Colors.blue),
+                                  SizedBox(width: 4),
+                                  Expanded(
+                                    child: Text(
+                                      (saleProvider.saleDate != null)
+                                          ? "\${saleProvider.saleDate!.day.toString().padLeft(2, '0')}/\${saleProvider.saleDate!.month.toString().padLeft(2, '0')}/\${saleProvider.saleDate!.year}"
+                                          : 'Hoy',
+                                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
