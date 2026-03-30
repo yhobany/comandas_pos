@@ -151,8 +151,14 @@ class DatabaseHelper {
   // --- Utility for Testing (Fase 13) ---
   Future<void> deleteAllSales() async {
     final db = await instance.database;
-    await db.delete('sale_items'); // Delete items first to respect foreign keys even though cascade is on
+    await db.delete('sale_items');
     await db.delete('sales');
+  }
+
+  Future<void> deleteSaleById(int saleId) async {
+    final db = await instance.database;
+    // ON DELETE CASCADE en sale_items elimina los ítems automáticamente
+    await db.delete('sales', where: 'id = ?', whereArgs: [saleId]);
   }
 
   // --- Sale Items ---
