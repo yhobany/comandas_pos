@@ -240,10 +240,9 @@ class _ReportsScreenState extends State<ReportsScreen> {
                                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                                ),
                              ),
-                             subtitle: Text(DateFormat('dd/MM/yyyy HH:mm').format(sale.date)),
-                             trailing: Text(
-                               '\$${sale.totalAmount.toStringAsFixed(2)}',
-                               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                             subtitle: Text(
+                               '${DateFormat('dd/MM/yyyy HH:mm').format(sale.date)}  |  \$${sale.totalAmount.toStringAsFixed(2)}',
+                               style: TextStyle(fontWeight: isSelected ? FontWeight.bold : FontWeight.normal),
                              ),
                              tileColor: isSelected ? Colors.red.shade50 : null,
                            );
