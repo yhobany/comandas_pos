@@ -117,13 +117,13 @@ class ComandaParserService {
 
       Product? matchedProduct = _findBestMatch(productNameStr, availableProducts);
 
-      // Si no hay Match (como "Coca Cola" no precargada, o "1 SIN AZUCAR"), la descartamos.
+      // Restauramos la regla estricta: si no hay match claro, descartamos la basura.
       if (matchedProduct == null) continue;
 
       items.add(SaleItem(
         saleId: 0,
         productId: matchedProduct.id,
-        name: matchedProduct.name,
+        name: matchedProduct.name, 
         quantity: quantity,
         unitPrice: matchedProduct.price,
         subtotal: matchedProduct.price * quantity,

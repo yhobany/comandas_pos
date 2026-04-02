@@ -12,9 +12,11 @@ class ProductProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> addProduct(Product product) async {
-    await DatabaseHelper.instance.insertProduct(product);
+  Future<Product> addProduct(Product product) async {
+    final id = await DatabaseHelper.instance.insertProduct(product);
     await fetchProducts();
+    product.id = id;
+    return product;
   }
 
   Future<void> updateProduct(Product product) async {

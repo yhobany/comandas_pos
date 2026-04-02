@@ -35,7 +35,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
 
   bool _isNewCategory = false;
 
-  void _saveForm() {
+  void _saveForm() async {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
       
@@ -45,24 +45,30 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
       }
 
       final productProvider = Provider.of<ProductProvider>(context, listen: false);
+      Product? savedProduct;
 
-      if (widget.product == null) {
-        productProvider.addProduct(Product(
+      // Un producto con ID nulo (como el que viene del OCR) debe tratarse como NUEVO
+      if (widget.product == null || widget.product!.id == null) {
+        savedProduct = await productProvider.addProduct(Product(
           name: _name,
           price: _price,
           category: _category,
           aliasKeywords: _aliasKeywords,
         ));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('✅ Producto creado exitosamente'), backgroundColor: Colors.green));
       } else {
-        productProvider.updateProduct(Product(
+        await productProvider.updateProduct(Product(
           id: widget.product!.id,
           name: _name,
           price: _price,
           category: _category,
           aliasKeywords: _aliasKeywords,
         ));
+        savedProduct = widget.product;
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('✅ Producto actualizado exitosamente'), backgroundColor: Colors.blue));
       }
-      Navigator.of(context).pop();
+      
+      Navigator.of(context).pop(savedProduct);
     }
   }
 

@@ -23,6 +23,11 @@ class SaleProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  void setSaleDate(DateTime newDate) {
+    _saleDate = newDate;
+    notifyListeners();
+  }
+
   void updateItemQuantity(int index, int newQuantity) {
     if (newQuantity < 1) return;
     final item = _currentItems[index];

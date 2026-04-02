@@ -67,6 +67,7 @@ class _ValidationScreenState extends State<ValidationScreen> {
                     Row(
                       children: [
                         Expanded(
+                          flex: 3,
                           child: TextField(
                             controller: _ticketController,
                             keyboardType: TextInputType.number,
@@ -74,9 +75,49 @@ class _ValidationScreenState extends State<ValidationScreen> {
                                setState(() {}); // Forzar repintado para evaluar obligatoriedad 
                             },
                             decoration: InputDecoration(
-                              labelText: 'Comanda Física N# (OBLIGATORIA)',
+                              labelText: 'Comanda N# (OBLIGATORIA)',
                               border: OutlineInputBorder(),
                               prefixIcon: Icon(Icons.receipt),
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: 8),
+                        Expanded(
+                          flex: 2,
+                          child: InkWell(
+                            onTap: () async {
+                              final current = saleProvider.saleDate ?? DateTime.now();
+                              final picked = await showDatePicker(
+                                context: context,
+                                initialDate: current,
+                                firstDate: DateTime(2020),
+                                lastDate: DateTime.now().add(Duration(days: 365)),
+                              );
+                              if (picked != null) {
+                                saleProvider.setSaleDate(picked);
+                              }
+                            },
+                            child: Container(
+                              padding: EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+                              decoration: BoxDecoration(
+                                border: Border.all(color: Colors.grey),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.calendar_month, size: 20, color: Colors.blue),
+                                  SizedBox(width: 4),
+                                  Expanded(
+                                    child: Text(
+                                      (saleProvider.saleDate != null)
+                                          ? "${saleProvider.saleDate!.day.toString().padLeft(2, '0')}/${saleProvider.saleDate!.month.toString().padLeft(2, '0')}/${saleProvider.saleDate!.year}"
+                                          : 'Hoy',
+                                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
@@ -200,21 +241,47 @@ class _ValidationScreenState extends State<ValidationScreen> {
           actions: [
             TextButton(
               child: Text('Crear en Catálogo'),
-              onPressed: () {
+              onPressed: () async {
                 Navigator.of(ctx).pop();
-                Navigator.of(context).push(
+                
+                // Si el ítem es desconocido, usamos el OCR crudo para el formulario. 
+                // Si es un ítem ya en catálogo que el usuario quiere duplicar/recrear, usamos rawOcrText también si está disponible.
+                String defaultName = item.rawOcrText ?? item.name;
+                
+                final result = await Navigator.of(context).push(
                   MaterialPageRoute(
                     builder: (context) => ProductFormScreen(
                       product: Product(
-                        name: item.name, 
+                        name: defaultName, 
                         price: item.unitPrice, 
-                        aliasKeywords: item.name // Set the OCR text as an alias
+                        aliasKeywords: defaultName
                       )
                     ),
                   ),
-                ).then((_) {
-                  // Actually, after creating a product we should probably trigger a refresh
-                });
+                );
+
+                if (result != null && result is Product) {
+                  // Si se creó con éxito, vinculamos el ítem de la venta actual al nuevo producto
+                  final updatedItem = SaleItem(
+                    id: item.id,
+                    saleId: item.saleId,
+                    productId: result.id,
+                    name: result.name, // Usar el nombre oficial guardado
+                    quantity: item.quantity,
+                    unitPrice: result.price, // Usar el precio oficial guardado
+                    subtotal: item.quantity * result.price,
+                    rawOcrText: item.rawOcrText,
+                  );
+                  
+                  Provider.of<SaleProvider>(context, listen: false).updateItem(index, updatedItem);
+                  
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('✅ Ítem vinculado al catálogo: ${result.name}'),
+                      backgroundColor: Colors.green,
+                    )
+                  );
+                }
               },
             ),
             TextButton(
