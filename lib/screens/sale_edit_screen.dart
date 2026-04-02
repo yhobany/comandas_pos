@@ -58,6 +58,25 @@ class _SaleEditScreenState extends State<SaleEditScreen> {
     });
   }
 
+  Future<void> _changeName(int index, String newName) async {
+    final item = _items[index];
+    final updated = SaleItem(
+      id: item.id,
+      saleId: item.saleId,
+      productId: item.productId,
+      name: newName,
+      quantity: item.quantity,
+      unitPrice: item.unitPrice,
+      subtotal: item.subtotal,
+      rawOcrText: item.rawOcrText,
+    );
+
+    setState(() {
+      _items[index] = updated;
+      _hasChanges = true;
+    });
+  }
+
   Future<void> _deleteItem(int index) async {
     if (_items.length == 1) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -203,8 +222,27 @@ class _SaleEditScreenState extends State<SaleEditScreen> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(item.name,
-                                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                                    TextFormField(
+                                      initialValue: item.name,
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold, 
+                                        fontSize: 16,
+                                        color: Colors.blue.shade900,
+                                      ),
+                                      decoration: InputDecoration(
+                                        isDense: true,
+                                        contentPadding: EdgeInsets.symmetric(vertical: 4),
+                                        border: UnderlineInputBorder(
+                                          borderSide: BorderSide(color: Colors.grey.shade300),
+                                        ),
+                                        focusedBorder: UnderlineInputBorder(
+                                          borderSide: BorderSide(color: Colors.blue, width: 2),
+                                        ),
+                                        hintText: 'Nombre del producto',
+                                        hintStyle: TextStyle(color: Colors.grey, fontWeight: FontWeight.normal),
+                                      ),
+                                      onChanged: (val) => _changeName(index, val),
+                                    ),
                                     Text(
                                       '\$${item.unitPrice.toStringAsFixed(0)} c/u  →  Subtotal: \$${item.subtotal.toStringAsFixed(0)}',
                                       style: TextStyle(color: Colors.grey.shade600, fontSize: 13),

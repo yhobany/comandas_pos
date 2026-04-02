@@ -101,11 +101,11 @@ class _ReportsScreenState extends State<ReportsScreen> {
             ? TextField(
                 controller: _searchController,
                 autofocus: true,
-                style: TextStyle(color: Colors.white),
-                cursorColor: Colors.white,
+                style: TextStyle(color: Colors.black87, fontSize: 18),
+                cursorColor: Colors.blue,
                 decoration: InputDecoration(
                   hintText: 'N° comanda o fecha (dd/mm/yyyy)...',
-                  hintStyle: TextStyle(color: Colors.white60),
+                  hintStyle: TextStyle(color: Colors.grey.shade600),
                   border: InputBorder.none,
                 ),
                 onChanged: (query) async {
@@ -279,7 +279,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                                });
                              },
                              secondary: Icon(
-                               Icons.receipt_long,
+                               Icons.receipt_long, size: 30,
                                color: isSelected ? Colors.red : Colors.green,
                              ),
                              title: Text(
