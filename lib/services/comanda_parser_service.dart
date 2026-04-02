@@ -17,6 +17,26 @@ class ComandaParserService {
     DateTime? receiptDate;
     String? ticketNumber;
 
+    // --- FASE 14 EXTRACTION RAZONADA (Anti-Espacios y Ruido OCR) ---
+    // En las imágenes, el texto de la Comanda N° puede separarse excesivamente 
+    // por largos espacios en blanco o tabulaciones artificiales antes de toparse con el dígito (Ej: "Comanda No.            3").
+    // 1. Purificamos el texto eliminando horas o fechas para que no atrape números erróneos.
+    var cleanText = text.replaceAll(RegExp(r'\d{1,2}:\d{2}:\d{2}[a-zA-Z\. ]*'), ' '); // Quitar horas con am/pm
+    cleanText = cleanText.replaceAll(RegExp(r'\d{1,2}/\d{1,2}/\d{4}'), ' '); // Quitar fechas
+    cleanText = cleanText.replaceAll(RegExp(r'\d{1,2}\s+\d{1,2}\s+\d{4}\s+\d{1,2}\s+\d{1,2}\s+\d{1,2}[a-zA-Z\. ]*'), ' '); // Quitar fechas sin barras "07 03 2026 06 10 00p m"
+    
+    // 2. Reemplazamos saltos de línea y tabulaciones para que la expresión opere horizontalmente.
+    final horizontalText = cleanText.replaceAll('\n', '  ').replaceAll('\r', ' ');
+    
+    // 3. Buscamos "Comanda", nos saltamos palabras basura y extraemos el primer grupo numérico aislado.
+    final ticketRegex = RegExp(r'Comanda(?:(?!\b\d{1,5}\b).)*?\b(\d{1,5})\b', caseSensitive: false);
+    final ticketMatch = ticketRegex.firstMatch(horizontalText);
+    
+    if (ticketMatch != null) {
+      ticketNumber = ticketMatch.group(1);
+    }
+    // ----------------------------------------------------
+
     // Busca: 04/03/2026 09:46:00p. m.
     final dateRegex = RegExp(r'(\d{2})/(\d{2})/(\d{4})\s+(\d{1,2}):(\d{2}):(\d{2})\s*([apm\. ]+)', caseSensitive: false);
     
@@ -44,9 +64,9 @@ class ComandaParserService {
         }
       }
 
-      // Busca: Comanda No. 4
+      // Busca de forma resiliente: "Comanda N°. 3" ignorando todo el ruido ('N', '°', '.', espacios) entre la palabra y el número
       if (ticketNumber == null) {
-        final ticketRegex = RegExp(r'Comanda\s+N[o\.]*\s*(\d+)', caseSensitive: false);
+        final ticketRegex = RegExp(r'Comanda[^\d]*(\d+)', caseSensitive: false);
         final ticketMatch = ticketRegex.firstMatch(line);
         if (ticketMatch != null) {
           ticketNumber = ticketMatch.group(1);
@@ -97,13 +117,13 @@ class ComandaParserService {
 
       Product? matchedProduct = _findBestMatch(productNameStr, availableProducts);
 
-      // Si no hay Match (como "Coca Cola" no precargada, o "1 SIN AZUCAR"), la descartamos.
+      // Restauramos la regla estricta: si no hay match claro, descartamos la basura.
       if (matchedProduct == null) continue;
 
       items.add(SaleItem(
         saleId: 0,
         productId: matchedProduct.id,
-        name: matchedProduct.name,
+        name: matchedProduct.name, 
         quantity: quantity,
         unitPrice: matchedProduct.price,
         subtotal: matchedProduct.price * quantity,

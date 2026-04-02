@@ -67,17 +67,73 @@ class _ValidationScreenState extends State<ValidationScreen> {
                     Row(
                       children: [
                         Expanded(
+                          flex: 3,
                           child: TextField(
                             controller: _ticketController,
+                            keyboardType: TextInputType.number,
+                            onChanged: (val) {
+                               setState(() {}); // Forzar repintado para evaluar obligatoriedad 
+                            },
                             decoration: InputDecoration(
-                              labelText: 'Comanda Física N# (Opcional)',
+                              labelText: 'Comanda N# (OBLIGATORIA)',
                               border: OutlineInputBorder(),
                               prefixIcon: Icon(Icons.receipt),
                             ),
                           ),
                         ),
+                        SizedBox(width: 8),
+                        Expanded(
+                          flex: 2,
+                          child: InkWell(
+                            onTap: () async {
+                              final current = saleProvider.saleDate ?? DateTime.now();
+                              final picked = await showDatePicker(
+                                context: context,
+                                initialDate: current,
+                                firstDate: DateTime(2020),
+                                lastDate: DateTime.now().add(Duration(days: 365)),
+                              );
+                              if (picked != null) {
+                                saleProvider.setSaleDate(picked);
+                              }
+                            },
+                            child: Container(
+                              padding: EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+                              decoration: BoxDecoration(
+                                border: Border.all(color: Colors.grey),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.calendar_month, size: 20, color: Colors.blue),
+                                  SizedBox(width: 4),
+                                  Expanded(
+                                    child: Text(
+                                      (saleProvider.saleDate != null)
+                                          ? "${saleProvider.saleDate!.day.toString().padLeft(2, '0')}/${saleProvider.saleDate!.month.toString().padLeft(2, '0')}/${saleProvider.saleDate!.year}"
+                                          : 'Hoy',
+                                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
                       ],
-                    )
+                    ),
+                    if (saleProvider.detectedTicketNumber == null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8.0),
+                        child: Row(
+                          children: [
+                            Icon(Icons.warning, color: Colors.orange, size: 20),
+                            SizedBox(width: 8),
+                            Expanded(child: Text('El OCR no detectó el número. Ingréselo manualmente.', style: TextStyle(color: Colors.orange.shade800, fontWeight: FontWeight.bold, fontSize: 12))),
+                          ],
+                        ),
+                      )
                   ],
                 ),
               ),
@@ -138,23 +194,33 @@ class _ValidationScreenState extends State<ValidationScreen> {
           );
         },
       ),
-      bottomNavigationBar: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            padding: EdgeInsets.symmetric(vertical: 16),
-            backgroundColor: Colors.green,
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 24.0),
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              padding: EdgeInsets.symmetric(vertical: 16),
+              backgroundColor: Colors.green,
+            ),
+            child: Text('CONFIRMAR Y GUARDAR VENTA', style: TextStyle(fontSize: 18, color: Colors.white)),
+            onPressed: () async {
+              // Validar estrepitosamente que no se guarde una venta sin comanda física adjunta
+              String? ticketToSave = _ticketController.text.trim();
+              if (ticketToSave.isEmpty) {
+                 ScaffoldMessenger.of(context).showSnackBar(
+                   SnackBar(
+                     content: Text('⚠️ ERROR: Debe ingresar el número de la Comanda antes de guardar'),
+                     backgroundColor: Colors.red,
+                   )
+                 );
+                 return; // Abortar guardado
+              }
+              
+              await Provider.of<SaleProvider>(context, listen: false).saveCurrentSaleWithTicket(ticketToSave);
+              Navigator.of(context).popUntil((route) => route.isFirst);
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Venta guardada exitosamente'), backgroundColor: Colors.green));
+            },
           ),
-          child: Text('CONFIRMAR Y GUARDAR VENTA', style: TextStyle(fontSize: 18, color: Colors.white)),
-          onPressed: () async {
-            // Save the sale with the optionally updated ticket number
-            String? ticketToSave = _ticketController.text.trim();
-            if (ticketToSave.isEmpty) ticketToSave = null;
-            
-            await Provider.of<SaleProvider>(context, listen: false).saveCurrentSaleWithTicket(ticketToSave);
-            Navigator.of(context).popUntil((route) => route.isFirst);
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Venta guardada exitosamente')));
-          },
         ),
       ),
     );
@@ -175,21 +241,47 @@ class _ValidationScreenState extends State<ValidationScreen> {
           actions: [
             TextButton(
               child: Text('Crear en Catálogo'),
-              onPressed: () {
+              onPressed: () async {
                 Navigator.of(ctx).pop();
-                Navigator.of(context).push(
+                
+                // Si el ítem es desconocido, usamos el OCR crudo para el formulario. 
+                // Si es un ítem ya en catálogo que el usuario quiere duplicar/recrear, usamos rawOcrText también si está disponible.
+                String defaultName = item.rawOcrText ?? item.name;
+                
+                final result = await Navigator.of(context).push(
                   MaterialPageRoute(
                     builder: (context) => ProductFormScreen(
                       product: Product(
-                        name: item.name, 
+                        name: defaultName, 
                         price: item.unitPrice, 
-                        aliasKeywords: item.name // Set the OCR text as an alias
+                        aliasKeywords: defaultName
                       )
                     ),
                   ),
-                ).then((_) {
-                  // Actually, after creating a product we should probably trigger a refresh
-                });
+                );
+
+                if (result != null && result is Product) {
+                  // Si se creó con éxito, vinculamos el ítem de la venta actual al nuevo producto
+                  final updatedItem = SaleItem(
+                    id: item.id,
+                    saleId: item.saleId,
+                    productId: result.id,
+                    name: result.name, // Usar el nombre oficial guardado
+                    quantity: item.quantity,
+                    unitPrice: result.price, // Usar el precio oficial guardado
+                    subtotal: item.quantity * result.price,
+                    rawOcrText: item.rawOcrText,
+                  );
+                  
+                  Provider.of<SaleProvider>(context, listen: false).updateItem(index, updatedItem);
+                  
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('✅ Ítem vinculado al catálogo: ${result.name}'),
+                      backgroundColor: Colors.green,
+                    )
+                  );
+                }
               },
             ),
             TextButton(

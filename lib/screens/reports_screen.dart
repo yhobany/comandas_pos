@@ -15,7 +15,9 @@ class _ReportsScreenState extends State<ReportsScreen> {
   List<Sale> _sales = [];
   double _totalAmount = 0;
   bool _isLoading = true;
-  
+  bool _selectionMode = false;
+  Set<int> _selectedIds = {};
+
   DateTime _startDate = DateTime.now();
   DateTime _endDate = DateTime.now();
 
@@ -24,6 +26,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
     super.initState();
     _loadSales();
   }
+
 
   void _setDateRange(String filter) {
     final now = DateTime.now();
@@ -52,6 +55,13 @@ class _ReportsScreenState extends State<ReportsScreen> {
     setState(() => _isLoading = false);
   }
 
+  Future<void> _loadSalesWithoutResettingDate() async {
+    setState(() => _isLoading = true);
+    _sales = await DatabaseHelper.instance.getSalesByDateRange(_startDate, _endDate);
+    _totalAmount = _sales.fold(0, (sum, sale) => sum + sale.totalAmount);
+    setState(() => _isLoading = false);
+  }
+
   Future<void> _pickDateRange() async {
     final DateTimeRange? picked = await showDateRangePicker(
       context: context,
@@ -74,7 +84,44 @@ class _ReportsScreenState extends State<ReportsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Reporte de Ventas')),
+      appBar: AppBar(
+        title: _selectionMode
+            ? Text('${_selectedIds.length} seleccionada(s)')
+            : Text('Reporte de Ventas'),
+        leading: _selectionMode
+            ? IconButton(
+                icon: Icon(Icons.close),
+                tooltip: 'Cancelar selección',
+                onPressed: () => setState(() {
+                  _selectionMode = false;
+                  _selectedIds.clear();
+                }),
+              )
+            : null,
+        actions: [
+          if (!_selectionMode) ...[
+            IconButton(
+              icon: Icon(Icons.checklist_rtl),
+              tooltip: 'Seleccionar para borrar',
+              onPressed: () => setState(() {
+                _selectionMode = true;
+                _selectedIds.clear();
+              }),
+            ),
+            IconButton(
+              icon: Icon(Icons.delete_sweep, color: Colors.grey.shade400),
+              tooltip: 'Borrar historial completo (Pruebas)',
+              onPressed: _confirmDeleteAllSales,
+            ),
+          ],
+          if (_selectionMode && _selectedIds.isNotEmpty)
+            IconButton(
+              icon: Icon(Icons.delete, color: Colors.red),
+              tooltip: 'Eliminar selección',
+              onPressed: _confirmDeleteSelected,
+            ),
+        ],
+      ),
       body: Column(
         children: [
            Padding(
@@ -105,7 +152,37 @@ class _ReportsScreenState extends State<ReportsScreen> {
                ),
              ),
            ),
-           if (_filter == 'Personalizado')
+           if (_filter == 'Diario')
+             Row(
+               mainAxisAlignment: MainAxisAlignment.center,
+               children: [
+                 IconButton(
+                   icon: Icon(Icons.chevron_left),
+                   onPressed: () {
+                     setState(() {
+                       _startDate = _startDate.subtract(Duration(days: 1));
+                       _endDate = DateTime(_startDate.year, _startDate.month, _startDate.day, 23, 59, 59);
+                     });
+                     _loadSalesWithoutResettingDate();
+                   },
+                 ),
+                 Text(
+                   DateFormat('dd/MM/yyyy').format(_startDate),
+                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                 ),
+                 IconButton(
+                   icon: Icon(Icons.chevron_right),
+                   onPressed: () {
+                     setState(() {
+                       _startDate = _startDate.add(Duration(days: 1));
+                       _endDate = DateTime(_startDate.year, _startDate.month, _startDate.day, 23, 59, 59);
+                     });
+                     _loadSalesWithoutResettingDate();
+                   },
+                 ),
+               ],
+             )
+           else if (_filter == 'Personalizado')
              Text(
                '${DateFormat('dd/MM/yyyy').format(_startDate)} - ${DateFormat('dd/MM/yyyy').format(_endDate)}',
                style: TextStyle(fontStyle: FontStyle.italic, color: Colors.grey),
@@ -132,23 +209,126 @@ class _ReportsScreenState extends State<ReportsScreen> {
                 ? Center(child: CircularProgressIndicator())
                 : _sales.isEmpty 
                   ? Center(child: Text('No hay ventas en este periodo.'))
-                  : ListView.builder(
-                      itemCount: _sales.length,
-                      itemBuilder: (context, index) {
-                        final sale = _sales[index];
-                        return ListTile(
-                          leading: Icon(Icons.monetization_on, color: Colors.green),
-                          title: Text(sale.ticketNumber != null 
-                            ? 'Comanda #${sale.ticketNumber}' 
-                            : 'Venta #${sale.id}'),
-                          subtitle: Text(DateFormat('dd/MM/yyyy HH:mm').format(sale.date)),
-                          trailing: Text('\$${sale.totalAmount.toStringAsFixed(2)}', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                          onTap: () => _showSaleDetails(sale),
-                        );
-                      },
-                    ),
+                   : ListView.builder(
+                       itemCount: _sales.length,
+                       itemBuilder: (context, index) {
+                         final sale = _sales[index];
+                         final bool isSelected = _selectedIds.contains(sale.id);
+
+                         if (_selectionMode) {
+                           return CheckboxListTile(
+                             value: isSelected,
+                             onChanged: (checked) {
+                               setState(() {
+                                 if (checked == true) {
+                                   _selectedIds.add(sale.id!);
+                                 } else {
+                                   _selectedIds.remove(sale.id);
+                                 }
+                               });
+                             },
+                             secondary: Icon(
+                               Icons.receipt_long,
+                               color: isSelected ? Colors.red : Colors.green,
+                             ),
+                             title: Text(
+                               sale.ticketNumber != null
+                                   ? 'Comanda N°${sale.ticketNumber}'
+                                   : 'Sin Comanda (Ref: V-${sale.id})',
+                               style: TextStyle(
+                                 color: isSelected ? Colors.red : (sale.ticketNumber == null ? Colors.orange : Colors.black),
+                                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                               ),
+                             ),
+                             subtitle: Text(
+                               '${DateFormat('dd/MM/yyyy HH:mm').format(sale.date)}  |  \$${sale.totalAmount.toStringAsFixed(2)}',
+                               style: TextStyle(fontWeight: isSelected ? FontWeight.bold : FontWeight.normal),
+                             ),
+                             tileColor: isSelected ? Colors.red.shade50 : null,
+                           );
+                         }
+
+                         return ListTile(
+                           leading: Icon(Icons.monetization_on, color: Colors.green),
+                           title: Text(sale.ticketNumber != null
+                             ? 'Comanda N°${sale.ticketNumber}'
+                             : 'Sin Comanda (Ref: V-${sale.id})',
+                             style: TextStyle(
+                               color: sale.ticketNumber == null ? Colors.red : Colors.black,
+                               fontWeight: sale.ticketNumber == null ? FontWeight.bold : FontWeight.normal,
+                             )),
+                           subtitle: Text(DateFormat('dd/MM/yyyy HH:mm').format(sale.date)),
+                           trailing: Text('\$${sale.totalAmount.toStringAsFixed(2)}', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                           onTap: () => _showSaleDetails(sale),
+                         );
+                       },
+                     ),
            )
         ],
+      )
+    );
+  }
+
+  void _confirmDeleteSelected() {
+    final count = _selectedIds.length;
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Eliminar $count comanda(s)', style: TextStyle(color: Colors.red)),
+        content: Text('Se eliminarán permanentemente las $count comanda(s) seleccionadas. Esta acción no se puede deshacer.'),
+        actions: [
+          TextButton(
+            child: Text('Cancelar'),
+            onPressed: () => Navigator.of(ctx).pop(),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: Text('Eliminar', style: TextStyle(color: Colors.white)),
+            onPressed: () async {
+              Navigator.of(ctx).pop();
+              for (final id in _selectedIds) {
+                await DatabaseHelper.instance.deleteSaleById(id);
+              }
+              setState(() {
+                _selectionMode = false;
+                _selectedIds.clear();
+              });
+              _loadSalesWithoutResettingDate();
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('$count comanda(s) eliminada(s) correctamente.'),
+                  backgroundColor: Colors.orange,
+                )
+              );
+            },
+          )
+        ]
+      )
+    );
+  }
+
+  void _confirmDeleteAllSales() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('⚠️ Peligro: Limpiar BD', style: TextStyle(color: Colors.red)),
+        content: Text('¿Desea purgar todo el historial de ventas? Esto NO afectará al catálogo de productos. Úselo solo para limpiar el entorno de pruebas.'),
+        actions: [
+          TextButton(
+            child: Text('Cancelar'),
+            onPressed: () => Navigator.of(ctx).pop(),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: Text('Purgar Ventas', style: TextStyle(color: Colors.white)),
+            onPressed: () async {
+              Navigator.of(ctx).pop();
+              await DatabaseHelper.instance.deleteAllSales();
+              _loadSales(); // Refrescar pantalla
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('🗑️ Historial de ventas purgado con éxito.')));
+            },
+          )
+        ]
       )
     );
   }
@@ -174,8 +354,8 @@ class _ReportsScreenState extends State<ReportsScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Detalle: ${sale.ticketNumber != null ? 'Comanda #${sale.ticketNumber}' : 'Venta #${sale.id}'}', 
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                  Text(sale.ticketNumber != null ? 'Comanda N°${sale.ticketNumber}' : 'Venta sin Comanda Física (Ref: V-${sale.id})', 
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: sale.ticketNumber == null ? Colors.red : Colors.black)),
                   Divider(),
                   Expanded(
                     child: ListView.builder(

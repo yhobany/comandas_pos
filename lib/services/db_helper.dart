@@ -148,6 +148,19 @@ class DatabaseHelper {
     return result.map((json) => Sale.fromMap(json)).toList();
   }
 
+  // --- Utility for Testing (Fase 13) ---
+  Future<void> deleteAllSales() async {
+    final db = await instance.database;
+    await db.delete('sale_items');
+    await db.delete('sales');
+  }
+
+  Future<void> deleteSaleById(int saleId) async {
+    final db = await instance.database;
+    // ON DELETE CASCADE en sale_items elimina los ítems automáticamente
+    await db.delete('sales', where: 'id = ?', whereArgs: [saleId]);
+  }
+
   // --- Sale Items ---
   Future<int> insertSaleItem(SaleItem item) async {
     final db = await instance.database;

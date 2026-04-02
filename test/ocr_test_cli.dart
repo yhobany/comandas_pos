@@ -3,7 +3,7 @@ import 'package:comandas_ocr/services/comanda_parser_service.dart';
 import 'package:comandas_ocr/data/initial_products.dart';
 
 void main() async {
-  final text = await File('../comandas_varias_02.md').readAsString();
+  final text = await File('debug_galeria.txt').readAsString();
   
   print('=== STARTING OCR PARSER TEST ===');
   final result = await ComandaParserService.parseTextToSaleItems(text, initialProducts);
