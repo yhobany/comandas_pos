@@ -69,7 +69,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
                 title: Text(product.name),
                 subtitle: Text('\$${product.price.toStringAsFixed(2)} - ${product.category ?? "Sin categoría"}'),
                 trailing: IconButton(
-                  icon: Icon(Icons.delete, color: Colors.red),
+                icon: Icon(Icons.delete, color: Colors.red, size: 28),
                   onPressed: () {
                     if (product.id != null) {
                       productProvider.deleteProduct(product.id!);

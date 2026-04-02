@@ -161,6 +161,43 @@ class DatabaseHelper {
     await db.delete('sales', where: 'id = ?', whereArgs: [saleId]);
   }
 
+  Future<List<Sale>> searchSales(String query) async {
+    final db = await instance.database;
+    final likeQuery = '%$query%';
+    final result = await db.query(
+      'sales',
+      where: 'ticket_number LIKE ? OR date LIKE ?',
+      whereArgs: [likeQuery, likeQuery],
+      orderBy: 'date DESC',
+    );
+    return result.map((json) => Sale.fromMap(json)).toList();
+  }
+
+  Future<void> updateSaleItem(SaleItem item) async {
+    final db = await instance.database;
+    await db.update(
+      'sale_items',
+      item.toMap(),
+      where: 'id = ?',
+      whereArgs: [item.id],
+    );
+  }
+
+  Future<void> deleteSaleItem(int itemId) async {
+    final db = await instance.database;
+    await db.delete('sale_items', where: 'id = ?', whereArgs: [itemId]);
+  }
+
+  Future<void> updateSaleTotalAmount(int saleId, double newTotal) async {
+    final db = await instance.database;
+    await db.update(
+      'sales',
+      {'total_amount': newTotal},
+      where: 'id = ?',
+      whereArgs: [saleId],
+    );
+  }
+
   // --- Sale Items ---
   Future<int> insertSaleItem(SaleItem item) async {
     final db = await instance.database;

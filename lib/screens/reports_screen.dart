@@ -4,6 +4,7 @@ import '../models/sale.dart';
 import '../models/sale_item.dart';
 import '../services/db_helper.dart';
 import 'package:intl/intl.dart';
+import 'sale_edit_screen.dart';
 
 class ReportsScreen extends StatefulWidget {
   @override
@@ -18,6 +19,11 @@ class _ReportsScreenState extends State<ReportsScreen> {
   bool _selectionMode = false;
   Set<int> _selectedIds = {};
 
+  // Búsqueda
+  bool _isSearching = false;
+  String _searchQuery = '';
+  final TextEditingController _searchController = TextEditingController();
+
   DateTime _startDate = DateTime.now();
   DateTime _endDate = DateTime.now();
 
@@ -27,6 +33,11 @@ class _ReportsScreenState extends State<ReportsScreen> {
     _loadSales();
   }
 
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   void _setDateRange(String filter) {
     final now = DateTime.now();
@@ -85,23 +96,63 @@ class _ReportsScreenState extends State<ReportsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: _selectionMode
-            ? Text('${_selectedIds.length} seleccionada(s)')
-            : Text('Reporte de Ventas'),
-        leading: _selectionMode
+        iconTheme: IconThemeData(size: 28),
+        title: _isSearching
+            ? TextField(
+                controller: _searchController,
+                autofocus: true,
+                style: TextStyle(color: Colors.white),
+                cursorColor: Colors.white,
+                decoration: InputDecoration(
+                  hintText: 'N° comanda o fecha (dd/mm/yyyy)...',
+                  hintStyle: TextStyle(color: Colors.white60),
+                  border: InputBorder.none,
+                ),
+                onChanged: (query) async {
+                  setState(() => _searchQuery = query);
+                  if (query.trim().isEmpty) {
+                    _loadSales();
+                  } else {
+                    final results = await DatabaseHelper.instance.searchSales(query.trim());
+                    setState(() {
+                      _sales = results;
+                      _totalAmount = results.fold(0, (s, sale) => s + sale.totalAmount);
+                    });
+                  }
+                },
+              )
+            : _selectionMode
+                ? Text('${_selectedIds.length} seleccionada(s)')
+                : Text('Reporte de Ventas'),
+        leading: _isSearching || _selectionMode
             ? IconButton(
-                icon: Icon(Icons.close),
-                tooltip: 'Cancelar selección',
-                onPressed: () => setState(() {
-                  _selectionMode = false;
-                  _selectedIds.clear();
-                }),
+                icon: Icon(Icons.close, size: 28),
+                tooltip: 'Cancelar',
+                onPressed: () {
+                  setState(() {
+                    _isSearching = false;
+                    _selectionMode = false;
+                    _searchQuery = '';
+                    _searchController.clear();
+                    _selectedIds.clear();
+                  });
+                  _loadSales();
+                },
               )
             : null,
         actions: [
-          if (!_selectionMode) ...[
+          if (!_selectionMode && !_isSearching) ...[
             IconButton(
-              icon: Icon(Icons.checklist_rtl),
+              icon: Icon(Icons.search, size: 28),
+              tooltip: 'Buscar comanda',
+              onPressed: () => setState(() {
+                _isSearching = true;
+                _selectionMode = false;
+                _selectedIds.clear();
+              }),
+            ),
+            IconButton(
+              icon: Icon(Icons.checklist_rtl, size: 28),
               tooltip: 'Seleccionar para borrar',
               onPressed: () => setState(() {
                 _selectionMode = true;
@@ -109,14 +160,14 @@ class _ReportsScreenState extends State<ReportsScreen> {
               }),
             ),
             IconButton(
-              icon: Icon(Icons.delete_sweep, color: Colors.grey.shade400),
+              icon: Icon(Icons.delete_sweep, color: Colors.grey.shade400, size: 28),
               tooltip: 'Borrar historial completo (Pruebas)',
               onPressed: _confirmDeleteAllSales,
             ),
           ],
           if (_selectionMode && _selectedIds.isNotEmpty)
             IconButton(
-              icon: Icon(Icons.delete, color: Colors.red),
+              icon: Icon(Icons.delete, color: Colors.red, size: 30),
               tooltip: 'Eliminar selección',
               onPressed: _confirmDeleteSelected,
             ),
@@ -259,7 +310,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                              )),
                            subtitle: Text(DateFormat('dd/MM/yyyy HH:mm').format(sale.date)),
                            trailing: Text('\$${sale.totalAmount.toStringAsFixed(2)}', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                           onTap: () => _showSaleDetails(sale),
+                           onTap: () async { final changed = await Navigator.of(context).push(MaterialPageRoute(builder: (_) => SaleEditScreen(sale: sale))); if (changed == true) _loadSalesWithoutResettingDate(); },
                          );
                        },
                      ),
