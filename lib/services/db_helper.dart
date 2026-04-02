@@ -163,11 +163,25 @@ class DatabaseHelper {
 
   Future<List<Sale>> searchSales(String query) async {
     final db = await instance.database;
-    final likeQuery = '%$query%';
+    String cleanQuery = query.trim();
+    
+    // Si parece una fecha dd/mm/yyyy o dd/mm, intentamos reformatear para el LIKE del ISO8601
+    String datePart = cleanQuery;
+    if (cleanQuery.contains('/')) {
+      List<String> parts = cleanQuery.split('/');
+      if (parts.length == 2) {
+        // dd/mm -> mm-dd
+        datePart = '${parts[1].padLeft(2, '0')}-${parts[0].padLeft(2, '0')}';
+      } else if (parts.length == 3) {
+        // dd/mm/yyyy -> yyyy-mm-dd
+        datePart = '${parts[2]}-${parts[1].padLeft(2, '0')}-${parts[0].padLeft(2, '0')}';
+      }
+    }
+
     final result = await db.query(
       'sales',
       where: 'ticket_number LIKE ? OR date LIKE ?',
-      whereArgs: [likeQuery, likeQuery],
+      whereArgs: ['%$cleanQuery%', '%$datePart%'],
       orderBy: 'date DESC',
     );
     return result.map((json) => Sale.fromMap(json)).toList();

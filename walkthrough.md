@@ -1,29 +1,20 @@
-# Walkthrough: feat/ui-search-edit - [COMPLETADO]
+# Walkthrough: Optimización de Búsqueda (feat/ui-search-edit) - [COMPLETADO]
 
-## 1. Búsqueda de Ventas en Reportes 🔍 (Mejorada)
-- **Activación**: Mediante el nuevo ícono `🔍` en el AppBar de Reportes.
-- **Búsqueda Global**: Encuentra por número de comanda o por fecha (ej: "29/03") en toda la base de datos.
-- **Visibilidad Corregida**: Se ajustó el color del texto a **negro (`black87`)** con cursor azul para asegurar legibilidad perfecta sobre el fondo blanco del buscador.
+## 1. Búsqueda de Ventas (Optimizada) 🔍
+Se ha refinado la lógica de búsqueda para cumplir con los requisitos de **exclusividad** y **flexibilidad de formato**.
 
-## 2. Edición de Comandas Existentes ✏️
-Al tocar cualquier comanda en el listado, se abre la nueva pantalla **`SaleEditScreen`**.
+### Mejoras Aplicadas:
+- **Exclusividad Estricta**: La consulta SQL ahora garantiza que solo se busquen coincidencias en las columnas `ticket_number` (Número de Comanda) y `date` (Fecha). Cualquier otro dato (como montos de dinero) ahora es ignorado por completo.
+- **Transformación de Formato de Fecha**:
+    - Si escribes `31/03`, el sistema lo transforma automáticamente a `03-31` para que coincida con el formato de almacenamiento ISO8601.
+    - Si escribes `01/04/2026`, se busca como `2026-04-01`.
+- **Coincidencia Parcial**: Se mantiene la posibilidad de escribir solo el mes (ej: `04`) o parte del número de comanda para una búsqueda rápida.
 
-**Nuevas Funcionalidades:**
-- **Edición de Nombre**: Cada producto tiene un campo de texto dedicado para corregir posibles fallos de lectura del OCR puntual.
-- **Edición de Cantidad**: Controles `+` y `-` (ahora en color naranja/verde vibrante).
-- **Eliminación**: Botón `🗑️` para borrar ese producto específico de la venta.
-- **Recálculo Automático**: El total se actualiza al instante en el banner superior (azul para guardado, naranja para cambios pendientes).
-- **Persistencia**: El botón "GUARDAR CAMBIOS" guarda nombres, cantidades y el nuevo total en la base de datos.
+## 2. Validación de Requisitos:
+- **Prueba de "Basura"**: Al buscar un monto como `7500`, el sistema devuelve 0 resultados, confirmando que ignora campos monetarios.
+- **Prueba de Comanda**: Al buscar `22`, aparecen todas las comandas que contengan ese número.
+- **Prueba de Fecha**: Al buscar `01/04`, aparecen correctamente las ventas del 1 de abril.
 
-## 3. Mejoras de UI (Usabilidad Táctil) 📏
-- **Íconos más grandes**:
-    - AppBar (trash, checklist, search): `size: 28`.
-    - Modo selección (`receipt_long`): `size: 30`.
-    - Ícono eliminar en "Menú & Precios": `size: 28`.
-- **Contraste**: Los botones y textos de edición se ajustaron para mejorar la visibilidad bajo cualquier iluminación.
-
-## Archivos Finalizados
-- `lib/services/db_helper.dart` — Métodos: `searchSales`, `updateSaleItem`, `deleteSaleItem`, `updateSaleTotalAmount`
-- `lib/screens/reports_screen.dart` — Buscador con contraste corregido e íconos grandes.
-- `lib/screens/sale_edit_screen.dart` — Nueva UI de edición con nombres editables.
-- `lib/screens/product_list_screen.dart` — Íconos aumentados.
+## Archivos Modificados
+- `lib/services/db_helper.dart` — Lógica de `searchSales` con reformateador de fecha integrado.
+- `lib/screens/reports_screen.dart` — Conexión con la nueva lógica optimizada.

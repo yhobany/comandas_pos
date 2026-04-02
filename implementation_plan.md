@@ -1,35 +1,39 @@
-# Plan: Optimización Funcional y de Interfaz (feat/ui-search-edit) - [COMPLETADO]
+# Plan: Optimización de Búsqueda de Ventas (feat/ui-search-edit)
 
 ## Objetivo
-Mejorar la experiencia del auditor con búsqueda de ventas, edición de comandas registradas, y mejoras de ergonomía visual en íconos críticos.
+Refinar la función de búsqueda en `ReportsScreen` para que sea **estrictamente exclusiva** a los campos de *Número de Comanda* y *Fecha*, ignorando cualquier otro atributo (como montos o IDs internos), y mejorando la consistencia en el formato de búsqueda de fechas.
 
 ---
 
-## Módulo 1: Búsqueda de Ventas (Completado)
-- Barra de búsqueda global en `ReportsScreen` accesible mediante el ícono 🔍.
-- Permite buscar por número de comanda o por fecha (ej: "29/03").
-- Texto ajustado a alto contraste (negro/azul sobre fondo claro).
+## Módulo 1: Refinamiento de la consulta SQL
+
+### Problema
+La consulta actual utiliza `LIKE` simple sobre `ticket_number` y `date`. Si el usuario ingresa una fecha en formato común (ej: `01/04`), la coincidencia con el formato ISO8601 de la base de datos (`2026-04-01...`) es inconsistente o inexistente.
+
+### Solución Propuesta
+
+#### [MODIFY] `lib/services/db_helper.dart`
+- Actualizar `searchSales(String query)`:
+    - Si el query contiene `/` o `-`, intentar reformatearlo para que coincida con partes del formato ISO `YYYY-MM-DD`.
+    - Mantener la exclusividad del `WHERE` solo para `ticket_number` y `date`.
+    - Asegurar que no se realicen búsquedas accidentales en `total_amount` o `id`.
 
 ---
 
-## Módulo 2: Edición de Comandas Existentes (Completado)
-- Pantalla completa `SaleEditScreen` permite:
-    - **Modificar Cantidad**: mediante botones `+/-`.
-    - **Modificar Nombre**: mediante `TextField` dedicado por cada ítem.
-    - **Borrar Ítem**: mediante ícono de basura.
-- El total se recalcula automáticamente y se persiste en la BD al pulsar "GUARDAR CAMBIOS".
+## Módulo 2: Interfaz de Usuario (UI)
+
+#### [MODIFY] `lib/screens/reports_screen.dart`
+- Asegurar que la lógica de `onChanged` procese el query de forma que la base de datos reciba los términos más limpios posibles.
+- Mantener el contraste del texto ya corregido.
 
 ---
 
-## Módulo 3: Mejoras de UI (Completado)
-- Íconos de AppBar aumentados a `28-30px`.
-- Ícono de selección (`checklist_rtl`) y recibo (`receipt_long`) mejorados en tamaño.
-- El texto del buscador ahora es perfectamente visible (contraste corregido).
+## Open Questions
 
----
+> [!IMPORTANT]
+> **Sobre el formato de fecha:** Cuando buscas por fecha, ¿prefieres que sea una coincidencia parcial (ej: escribir `04` y que salgan todas las de abril) o que intentemos forzar el formato `dd/mm/yyyy`? He optado por mantener la flexibilidad de búsqueda parcial por su rapidez.
 
-## Verificación Final
-- [x] Búsqueda por N° comanda → Resultados inmediatos.
-- [x] Edición de nombre y cantidad → Total recalculado y persistido.
-- [x] Visibilidad del buscador → Texto oscuro sobre fondo blanco corregido.
-- [x] Usabilidad → Íconos fáciles de presionar en móviles.
+## Verification Plan
+1. Ingresar un monto de venta (ej: `7500`) en el buscador → El resultado debe ser vacío (confirmando que ignora otros campos).
+2. Ingresar un número de comanda parcial (ej: `2`) → Debe mostrar las comandas `2`, `22`, etc.
+3. Ingresar una fecha en formato `dd/mm` (ej: `01/04`) → Debe mostrar las ventas del 1 de abril.

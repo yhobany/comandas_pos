@@ -1,28 +1,16 @@
-# Tareas: feat/ui-search-edit - [COMPLETADO]
+# Tareas: Optimización de Búsqueda (feat/ui-search-edit)
 
-## Módulo 1: Búsqueda de Ventas en Reportes
-- [x] `db_helper.dart` — Añadir `searchSales(String query)`
-- [x] `reports_screen.dart` — Añadir campo de búsqueda expandible
-- [x] `reports_screen.dart` — Texto con alto contraste corregido ✅
-- [x] `reports_screen.dart` — Mostrar resultados de búsqueda global
-- [x] `reports_screen.dart` — Al limpiar búsqueda, volver al filtro de fecha activo
+## Módulo 1: Refinamiento de la consulta SQL
+- [ ] `db_helper.dart` — Actualizar `searchSales(String query)`:
+    - Asegurar que el query se aplique **exclusivamente** a `ticket_number` y `date`.
+    - Implementar un reformateador de fecha simple (ej: pasar de `dd/mm` a `YYYY-MM-DD`).
+    - Eliminar cualquier otra propiedad que se estuviera comparando (actualmente ya está solo con esas dos, pero se debe reforzar).
 
-## Módulo 2: Edición de Ventas Existentes
-- [x] `db_helper.dart` — Añadir `updateSaleItem(SaleItem item)`
-- [x] `db_helper.dart` — Añadir `deleteSaleItem(int itemId)`
-- [x] `db_helper.dart` — Añadir `updateSaleTotalAmount(int saleId, double newTotal)`
-- [x] `lib/screens/sale_edit_screen.dart` — **Modificado para incluir edición de nombre** ✅
-- [x] `reports_screen.dart` — Al tocar una venta, navegar a `SaleEditScreen`
-- [x] `sale_edit_screen.dart` — Guardar cambios de nombre y cantidad, y refrescar reporte ✅
-
-## Módulo 3: Mejoras Visuales de Íconos
-- [x] `reports_screen.dart` — Aumentar tamaño de íconos en AppBar (trash + checklist)
-- [x] `reports_screen.dart` — Mejorar visibilidad del checkbox en modo selección
-- [x] `reports_screen.dart` — Aumentar tamaño del recibo (`receipt_long: 30`) ✅
-- [x] `product_list_screen.dart` — Aumentar tamaño del ícono de eliminar (28)
+## Módulo 2: Interfaz de Usuario (UI)
+- [ ] `reports_screen.dart` — Ajustar el `hintText` para que sea más claro.
+- [ ] `reports_screen.dart` — Validar que el query se pase correctamente al `DatabaseHelper`.
 
 ## Verificación Final
-- [x] Prueba de búsqueda por número de comanda (legibilidad perfecta) ✅
-- [x] Prueba de edición: cambiar nombre y cantidad → Total recalcula y persiste ✅
-- [x] Prueba de borrar ítem individual → Venta sigue visible con total correcto ✅
-- [x] Verificación visual: íconos claramente visibles en toda la app ✅
+- [ ] Buscar un monto exacto (ej: `7500`) → Debe dar resultado vacío.
+- [ ] Buscar un número de comanda parcial (ej: `2`) → Debe encontrar las correctas.
+- [ ] Buscar una fecha en formato `dd/mm` o `yyyy-mm` → Debe encontrar las correctas.
