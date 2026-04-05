@@ -1,16 +1,24 @@
-# Tareas: Optimización de Búsqueda (feat/ui-search-edit)
+# Tareas: Exportación de Comandas a PDF
 
-## Módulo 1: Refinamiento de la consulta SQL
-- [ ] `db_helper.dart` — Actualizar `searchSales(String query)`:
-    - Asegurar que el query se aplique **exclusivamente** a `ticket_number` y `date`.
-    - Implementar un reformateador de fecha simple (ej: pasar de `dd/mm` a `YYYY-MM-DD`).
-    - Eliminar cualquier otra propiedad que se estuviera comparando (actualmente ya está solo con esas dos, pero se debe reforzar).
+## Módulo 1: Dependencias
+- [x] Ejecutar `flutter pub add pdf printing`.
+- [x] Asegurar que el proyecto compila tras las nuevas librerías.
 
-## Módulo 2: Interfaz de Usuario (UI)
-- [ ] `reports_screen.dart` — Ajustar el `hintText` para que sea más claro.
-- [ ] `reports_screen.dart` — Validar que el query se pase correctamente al `DatabaseHelper`.
+## Módulo 2: Servicio PDF (`lib/services/pdf_service.dart`)
+- [x] Crear clase `PdfService`.
+- [x] Construir la maquetación del PDF usando paquete `pdf/widgets.dart`
+    - [x] Titular y Fecha del reporte.
+    - [x] Ciclo por cada venta: Encabezado (N° comanda y Fecha), Tabla con productos, total de la venta.
+    - [x] Suma total (Consolidado final).
+- [x] Consumir `DatabaseHelper` para rellenar los `SaleItem`.
+- [x] Usar `Printing.sharePdf(...)` para compartir.
+
+## Módulo 3: Interfaz UI (`lib/screens/reports_screen.dart`)
+- [x] Añadir botón de "Exportar a PDF" en el bloque de acciones de selección.
+- [x] Conectar el estado actual (`_selectedIds`, `_sales`) con la función del servicio.
+- [x] Mostrar un identificador de carga temporal (opcional) si es muy masiva la selección.
 
 ## Verificación Final
-- [ ] Buscar un monto exacto (ej: `7500`) → Debe dar resultado vacío.
-- [ ] Buscar un número de comanda parcial (ej: `2`) → Debe encontrar las correctas.
-- [ ] Buscar una fecha en formato `dd/mm` o `yyyy-mm` → Debe encontrar las correctas.
+- [x] Entrar al modo selección de comandas en la app.
+- [x] Seleccionar 2 reportes válidos, oprimir Exportar.
+- [x] Comprobar apertura del menú del sistema y apertura del PDF renderizado.

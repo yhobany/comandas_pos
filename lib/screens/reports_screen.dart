@@ -3,6 +3,7 @@ import 'package:fl_chart/fl_chart.dart';
 import '../models/sale.dart';
 import '../models/sale_item.dart';
 import '../services/db_helper.dart';
+import '../services/pdf_service.dart';
 import 'package:intl/intl.dart';
 import 'sale_edit_screen.dart';
 
@@ -165,12 +166,18 @@ class _ReportsScreenState extends State<ReportsScreen> {
               onPressed: _confirmDeleteAllSales,
             ),
           ],
-          if (_selectionMode && _selectedIds.isNotEmpty)
+          if (_selectionMode && _selectedIds.isNotEmpty) ...[
+            IconButton(
+              icon: Icon(Icons.picture_as_pdf, color: Colors.blue.shade700, size: 30),
+              tooltip: 'Exportar a PDF',
+              onPressed: _exportSelectedToPdf,
+            ),
             IconButton(
               icon: Icon(Icons.delete, color: Colors.red, size: 30),
               tooltip: 'Eliminar selección',
               onPressed: _confirmDeleteSelected,
             ),
+          ],
         ],
       ),
       body: Column(
@@ -318,6 +325,31 @@ class _ReportsScreenState extends State<ReportsScreen> {
         ],
       )
     );
+  }
+
+  void _exportSelectedToPdf() async {
+    final selectedSales = _sales.where((sale) => _selectedIds.contains(sale.id)).toList();
+    if (selectedSales.isEmpty) return;
+    
+    // Mostrando indicador si es masivo
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Generando reporte PDF...'), duration: Duration(seconds: 1)),
+    );
+
+    try {
+      await PdfService.generateAndShareSalesPdf(selectedSales);
+      
+      if (!mounted) return;
+      setState(() {
+        _selectionMode = false;
+        _selectedIds.clear();
+      });
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al generar PDF: $e'), backgroundColor: Colors.red),
+      );
+    }
   }
 
   void _confirmDeleteSelected() {

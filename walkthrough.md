@@ -1,20 +1,20 @@
-# Walkthrough: Optimización de Búsqueda (feat/ui-search-edit) - [COMPLETADO]
+# Walkthrough: Exportación a PDF de Comandas (feat/ui-search-edit)
 
-## 1. Búsqueda de Ventas (Optimizada) 🔍
-Se ha refinado la lógica de búsqueda para cumplir con los requisitos de **exclusividad** y **flexibilidad de formato**.
+La nueva funcionalidad permite generar reportes profesionales listos para enviar a contadores, imprimir o guardar para auditoría.
 
-### Mejoras Aplicadas:
-- **Exclusividad Estricta**: La consulta SQL ahora garantiza que solo se busquen coincidencias en las columnas `ticket_number` (Número de Comanda) y `date` (Fecha). Cualquier otro dato (como montos de dinero) ahora es ignorado por completo.
-- **Transformación de Formato de Fecha**:
-    - Si escribes `31/03`, el sistema lo transforma automáticamente a `03-31` para que coincida con el formato de almacenamiento ISO8601.
-    - Si escribes `01/04/2026`, se busca como `2026-04-01`.
-- **Coincidencia Parcial**: Se mantiene la posibilidad de escribir solo el mes (ej: `04`) o parte del número de comanda para una búsqueda rápida.
+## 1. Funcionamiento sin alterar la experiencia (UI)
+Cuando ingresas en la sección `Reporte de Ventas`, el sistema cuenta con el botón de "cajas de verificación" (el botón que antes solo servía para borrar masivamente).
+- Al presionarlo y seleccionar una o varias facturas de la lista, la barra de opciones se dividirá:
+  - 🗑️ Un icono rojo para su eliminación permanente.
+  - 📄 **Un icono azul moderno (NUEVO)** con el símbolo de PDF para exportar la selección de datos.
 
-## 2. Validación de Requisitos:
-- **Prueba de "Basura"**: Al buscar un monto como `7500`, el sistema devuelve 0 resultados, confirmando que ignora campos monetarios.
-- **Prueba de Comanda**: Al buscar `22`, aparecen todas las comandas que contengan ese número.
-- **Prueba de Fecha**: Al buscar `01/04`, aparecen correctamente las ventas del 1 de abril.
+## 2. Generación Estructurara (PDF Service)
+Al oprimir Exportar a PDF, un sistema en segundo plano tomará **exclusivamente las comandas que chequeaste**, consultará todos sus productos internos a la base de datos y armará un documento limpio.
+- **Cabecera**: Contiene la fecha exacta de generación del reporte.
+- **Cuerpo por cada venta**: Incluye el Número de comanda, su propia fecha de registro, y una tabla cuadriculada con el _Producto, Cantidad, Precio Unitario y Subtotal_ de lo facturado en ella. Agregando el cobro final en verde al pie.
+- **Pie de Página Cierre**: Sumará los resultados de **todas** las agrupaciones seleccionadas y mostrará un recuadro enfatizado con el **Total Consolidado** general de exportación.
 
-## Archivos Modificados
-- `lib/services/db_helper.dart` — Lógica de `searchSales` con reformateador de fecha integrado.
-- `lib/screens/reports_screen.dart` — Conexión con la nueva lógica optimizada.
+## 3. Compatibilidad Nativa
+El servicio está equipado con la librería `printing`, de modo que al completar la conformación de tablas, Android abrirá el _Sheet_ nativo para compartir (WhatsApp, Slack, Correos) o guardar como Archivo a la memoria del equipo de inmediato, con un titulo autonumerado como `Reporte_Ventas_2026xxxx_xxxx.pdf`.
+
+El proyecto fue re-analizado demostrando compatibilidad del 100% en sus compiladores.
