@@ -254,7 +254,7 @@ class _ValidationScreenState extends State<ValidationScreen> {
           children: [
             Icon(Icons.add_business, color: Colors.blue),
             SizedBox(width: 10),
-            Text('Añadir Item Manual'),
+            Expanded(child: Text('Añadir Item Manual', overflow: TextOverflow.visible)),
           ],
         ),
         content: Form(

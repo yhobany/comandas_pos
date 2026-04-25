@@ -124,13 +124,32 @@ class _ScannerScreenState extends State<ScannerScreen> {
                    SizedBox(height: 16),
                    OutlinedButton.icon(
                      icon: Icon(Icons.photo_library),
-                     label: Text('Seleccionar de Galería'),
+                     label: Padding(
+                       padding: const EdgeInsets.all(8.0),
+                       child: Text('Seleccionar de Galería', style: TextStyle(fontSize: 16)),
+                     ),
+                     style: OutlinedButton.styleFrom(shape: StadiumBorder()),
                      onPressed: () => _processImage(ImageSource.gallery),
                    ),
+                   SizedBox(height: 32),
+                   Container(
+                     width: 60,
+                     height: 1,
+                     color: Colors.grey.shade300,
+                   ),
                    SizedBox(height: 24),
-                   TextButton.icon(
+                   ElevatedButton.icon(
                      icon: Icon(Icons.edit_document),
-                     label: Text('Crear Comanda Manualmente', style: TextStyle(fontSize: 16)),
+                     label: Padding(
+                       padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 8.0),
+                       child: Text('Crear Comanda Manualmente', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                     ),
+                     style: ElevatedButton.styleFrom(
+                       backgroundColor: Colors.blue.shade50,
+                       foregroundColor: Colors.blue.shade800,
+                       elevation: 0,
+                       shape: StadiumBorder(),
+                     ),
                      onPressed: () {
                        Provider.of<SaleProvider>(context, listen: false).setCurrentItems(
                          [], 

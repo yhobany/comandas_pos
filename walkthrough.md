@@ -1,21 +1,24 @@
 # Walkthrough: Edición Manual y Reportes Multiformato
 
-Se han implementado mejoras significativas en la flexibilidad del sistema de comandas, permitiendo la intervención manual total y la exportación de reportes en formatos PDF y Excel.
+Se han implementado mejoras significativas en la flexibilidad del sistema de comandas, permitiendo la intervención manual total, el soporte desde cero, y la exportación de reportes en formatos PDF y Excel.
 
-## 1. Edición Manual de Comandas
-Se han habilitado nuevos puntos de entrada para la edición manual, cubriendo casos donde el OCR no es suficiente:
-- **Pantalla de Validación**: El botón **"+"** en la parte superior ahora permite registrar productos que no fueron detectados por la cámara.
-- **Historial de Ventas**: Al editar una venta guardada, ahora puedes añadir nuevos ítems usando el botón **"+"**, garantizando que el total de la venta se actualice automáticamente.
-- **Edición Directa**: Los nombres de los productos en la lista de edición ahora son campos de texto editables.
+## 1. Nueva Creación Totalmente Manual
+Ahora es posible omitir por completo el flujo de captura de la cámara si solo necesitas ingresar una comanda en blanco:
+- **Pantalla Inicial (Scanner)**: Se ha agregado un botón secundario llamado **"Crear Comanda Manualmente"** que te redirige a una comanda limpia.
+- **Pantalla de Validación**: Si omites la cámara, verás un estado vacío claro que te invita a usar el botón **"Añadir Producto Manualmente"**.
 
-## 2. Reportes Multiformato (PDF / XLSX)
-La funcionalidad de exportación se ha unificado bajo un único menú de opciones:
-- Al seleccionar comandas en la pantalla de Reportes, el botón de compartir abrirá un diálogo de selección:
-  - **PDF**: El formato imprimible tradicional con tablas estructuradas.
-  - **Excel (XLSX)**: Formato de hoja de cálculo ideal para contabilidad o gestión externa. El diseño imita la jerarquía del PDF (Cabecera de venta -> ítems -> sumatoria).
+## 2. Edición Manual de Comandas
+Se han habilitado nuevos puntos de entrada para la edición manual, cubriendo todos los casos de uso:
+- **Historial de Ventas**: Al ver una venta guardada, ahora puedes añadir nuevos ítems usando el botón **"+"** en la parte superior derecha.
+- **Botones Adaptables**: Se ha corregido un pequeño error de desbordamiento de la interfaz (overflow) al editar ítems. Ahora, los botones de (+ / - / eliminar) se adaptan inteligentemente al ancho de cualquier pantalla sin generar errores visuales.
+- **Edición Directa**: Los nombres de los productos parciales pueden editarse haciendo tap sobre ellos.
 
-## 3. Servicios Técnicos
-- Se implementó `XlsxService` utilizando la librería `excel`.
-- Se integró `share_plus` para que los archivos generados (.xlsx) se envíen directamente por WhatsApp o correo sin necesidad de almacenamiento manual.
+## 3. Reportes Multiformato (PDF / XLSX)
+La funcionalidad de exportación se unificó bajo un único menú de opciones:
+- Selecciona varias comandas en la pantalla de Reportes.
+- El botón de "Compartir" desplegará un menú inferior (Bottom Sheet).
+- Elige **Excel (XLSX)** para un archivo tabulado o **PDF** para un documento imprimible. El formato Excel imita la jerarquía original separando cada venta por su cabecera y listando luego sus ítems, seguido de la sumatoria total final.
 
-El proyecto compila correctamente y está listo para ser desplegado para pruebas finales.
+## 4. Servicios Técnicos Clave
+- Se implementó `XlsxService` usando la librería compilable `excel` v4.
+- Uso de `share_plus` garantizado para exportaciones nativas transparentes hacia WhatsApp/Mail.
