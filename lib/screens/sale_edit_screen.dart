@@ -112,6 +112,78 @@ class _SaleEditScreenState extends State<SaleEditScreen> {
     }
   }
 
+  void _addItemManually() {
+    final TextEditingController _nameController = TextEditingController();
+    final TextEditingController _priceController = TextEditingController();
+    final TextEditingController _qtyController = TextEditingController(text: '1');
+    final _formKey = GlobalKey<FormState>();
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Añadir ítem a venta'),
+        content: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                controller: _nameController,
+                decoration: InputDecoration(labelText: 'Producto'),
+                validator: (val) => val == null || val.isEmpty ? 'Requerido' : null,
+              ),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: _priceController,
+                      decoration: InputDecoration(labelText: 'Precio'),
+                      keyboardType: TextInputType.number,
+                      validator: (val) => val == null || double.tryParse(val) == null ? 'Inválido' : null,
+                    ),
+                  ),
+                  SizedBox(width: 10),
+                  Expanded(
+                    child: TextFormField(
+                      controller: _qtyController,
+                      decoration: InputDecoration(labelText: 'Cant.'),
+                      keyboardType: TextInputType.number,
+                      validator: (val) => val == null || int.tryParse(val) == null ? 'Inválido' : null,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text('Cancelar')),
+          ElevatedButton(
+            onPressed: () {
+              if (_formKey.currentState!.validate()) {
+                final newItem = SaleItem(
+                  saleId: _sale.id!,
+                  productId: null,
+                  name: _nameController.text.trim(),
+                  quantity: int.parse(_qtyController.text),
+                  unitPrice: double.parse(_priceController.text),
+                  subtotal: int.parse(_qtyController.text) * double.parse(_priceController.text),
+                  rawOcrText: 'MANUAL_EDIT',
+                );
+                setState(() {
+                  _items.add(newItem);
+                  _hasChanges = true;
+                });
+                Navigator.pop(ctx);
+              }
+            },
+            child: Text('Añadir'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _saveChanges() async {
     setState(() => _isLoading = true);
 
@@ -160,6 +232,11 @@ class _SaleEditScreenState extends State<SaleEditScreen> {
           ],
         ),
         actions: [
+          IconButton(
+            icon: Icon(Icons.add_circle_outline, color: Colors.white, size: 28),
+            tooltip: 'Añadir ítem',
+            onPressed: _addItemManually,
+          ),
           if (_hasChanges)
             TextButton.icon(
               icon: Icon(Icons.save, color: Colors.white),

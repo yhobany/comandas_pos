@@ -1,20 +1,21 @@
-# Walkthrough: Exportación a PDF de Comandas (feat/ui-search-edit)
+# Walkthrough: Edición Manual y Reportes Multiformato
 
-La nueva funcionalidad permite generar reportes profesionales listos para enviar a contadores, imprimir o guardar para auditoría.
+Se han implementado mejoras significativas en la flexibilidad del sistema de comandas, permitiendo la intervención manual total y la exportación de reportes en formatos PDF y Excel.
 
-## 1. Funcionamiento sin alterar la experiencia (UI)
-Cuando ingresas en la sección `Reporte de Ventas`, el sistema cuenta con el botón de "cajas de verificación" (el botón que antes solo servía para borrar masivamente).
-- Al presionarlo y seleccionar una o varias facturas de la lista, la barra de opciones se dividirá:
-  - 🗑️ Un icono rojo para su eliminación permanente.
-  - 📄 **Un icono azul moderno (NUEVO)** con el símbolo de PDF para exportar la selección de datos.
+## 1. Edición Manual de Comandas
+Se han habilitado nuevos puntos de entrada para la edición manual, cubriendo casos donde el OCR no es suficiente:
+- **Pantalla de Validación**: El botón **"+"** en la parte superior ahora permite registrar productos que no fueron detectados por la cámara.
+- **Historial de Ventas**: Al editar una venta guardada, ahora puedes añadir nuevos ítems usando el botón **"+"**, garantizando que el total de la venta se actualice automáticamente.
+- **Edición Directa**: Los nombres de los productos en la lista de edición ahora son campos de texto editables.
 
-## 2. Generación Estructurara (PDF Service)
-Al oprimir Exportar a PDF, un sistema en segundo plano tomará **exclusivamente las comandas que chequeaste**, consultará todos sus productos internos a la base de datos y armará un documento limpio.
-- **Cabecera**: Contiene la fecha exacta de generación del reporte.
-- **Cuerpo por cada venta**: Incluye el Número de comanda, su propia fecha de registro, y una tabla cuadriculada con el _Producto, Cantidad, Precio Unitario y Subtotal_ de lo facturado en ella. Agregando el cobro final en verde al pie.
-- **Pie de Página Cierre**: Sumará los resultados de **todas** las agrupaciones seleccionadas y mostrará un recuadro enfatizado con el **Total Consolidado** general de exportación.
+## 2. Reportes Multiformato (PDF / XLSX)
+La funcionalidad de exportación se ha unificado bajo un único menú de opciones:
+- Al seleccionar comandas en la pantalla de Reportes, el botón de compartir abrirá un diálogo de selección:
+  - **PDF**: El formato imprimible tradicional con tablas estructuradas.
+  - **Excel (XLSX)**: Formato de hoja de cálculo ideal para contabilidad o gestión externa. El diseño imita la jerarquía del PDF (Cabecera de venta -> ítems -> sumatoria).
 
-## 3. Compatibilidad Nativa
-El servicio está equipado con la librería `printing`, de modo que al completar la conformación de tablas, Android abrirá el _Sheet_ nativo para compartir (WhatsApp, Slack, Correos) o guardar como Archivo a la memoria del equipo de inmediato, con un titulo autonumerado como `Reporte_Ventas_2026xxxx_xxxx.pdf`.
+## 3. Servicios Técnicos
+- Se implementó `XlsxService` utilizando la librería `excel`.
+- Se integró `share_plus` para que los archivos generados (.xlsx) se envíen directamente por WhatsApp o correo sin necesidad de almacenamiento manual.
 
-El proyecto fue re-analizado demostrando compatibilidad del 100% en sus compiladores.
+El proyecto compila correctamente y está listo para ser desplegado para pruebas finales.

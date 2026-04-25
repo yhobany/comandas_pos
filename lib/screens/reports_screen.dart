@@ -4,6 +4,7 @@ import '../models/sale.dart';
 import '../models/sale_item.dart';
 import '../services/db_helper.dart';
 import '../services/pdf_service.dart';
+import '../services/xlsx_service.dart';
 import 'package:intl/intl.dart';
 import 'sale_edit_screen.dart';
 
@@ -168,9 +169,9 @@ class _ReportsScreenState extends State<ReportsScreen> {
           ],
           if (_selectionMode && _selectedIds.isNotEmpty) ...[
             IconButton(
-              icon: Icon(Icons.picture_as_pdf, color: Colors.blue.shade700, size: 30),
-              tooltip: 'Exportar a PDF',
-              onPressed: _exportSelectedToPdf,
+              icon: Icon(Icons.share, color: Colors.blue.shade700, size: 30),
+              tooltip: 'Exportar selección',
+              onPressed: _showExportOptions,
             ),
             IconButton(
               icon: Icon(Icons.delete, color: Colors.red, size: 30),
@@ -327,17 +328,54 @@ class _ReportsScreenState extends State<ReportsScreen> {
     );
   }
 
-  void _exportSelectedToPdf() async {
+  void _showExportOptions() {
     final selectedSales = _sales.where((sale) => _selectedIds.contains(sale.id)).toList();
     if (selectedSales.isEmpty) return;
-    
-    // Mostrando indicador si es masivo
+
+    showModalBottomSheet(
+      context: context,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('Elija el formato de exportación', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            SizedBox(height: 20),
+            ListTile(
+              leading: Icon(Icons.picture_as_pdf, color: Colors.red, size: 32),
+              title: Text('Documento PDF (Imprimible)'),
+              onTap: () {
+                Navigator.pop(ctx);
+                _handleExport('pdf', selectedSales);
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.table_chart, color: Colors.green, size: 32),
+              title: Text('Hoja de Excel (.xlsx)'),
+              onTap: () {
+                Navigator.pop(ctx);
+                _handleExport('xlsx', selectedSales);
+              },
+            ),
+            SizedBox(height: 10),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _handleExport(String format, List<Sale> selectedSales) async {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Generando reporte PDF...'), duration: Duration(seconds: 1)),
+      SnackBar(content: Text('Generando reporte $format...'), duration: Duration(seconds: 1)),
     );
 
     try {
-      await PdfService.generateAndShareSalesPdf(selectedSales);
+      if (format == 'pdf') {
+        await PdfService.generateAndShareSalesPdf(selectedSales);
+      } else {
+        await XlsxService.generateAndShareSalesXlsx(selectedSales);
+      }
       
       if (!mounted) return;
       setState(() {
@@ -347,7 +385,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al generar PDF: $e'), backgroundColor: Colors.red),
+        SnackBar(content: Text('Error al exportar: $e'), backgroundColor: Colors.red),
       );
     }
   }

@@ -227,7 +227,80 @@ class _ValidationScreenState extends State<ValidationScreen> {
   }
 
   void _showAddDialog(BuildContext context) {
-    // Basic dialog to add manual item. For brevity, similar to EditDialog.
+    final TextEditingController _nameController = TextEditingController();
+    final TextEditingController _priceController = TextEditingController();
+    final TextEditingController _qtyController = TextEditingController(text: '1');
+    final _formKey = GlobalKey<FormState>();
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.add_business, color: Colors.blue),
+            SizedBox(width: 10),
+            Text('Añadir Item Manual'),
+          ],
+        ),
+        content: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                controller: _nameController,
+                decoration: InputDecoration(labelText: 'Nombre del Producto', hintText: 'Ej: Coca Cola 350ml'),
+                validator: (val) => val == null || val.isEmpty ? 'Requerido' : null,
+                textCapitalization: TextCapitalization.sentences,
+              ),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: _priceController,
+                      decoration: InputDecoration(labelText: 'Precio Unit.', prefixText: '$'),
+                      keyboardType: TextInputType.number,
+                      validator: (val) => val == null || double.tryParse(val) == null ? 'Inválido' : null,
+                    ),
+                  ),
+                  SizedBox(width: 15),
+                  Expanded(
+                    child: TextFormField(
+                      controller: _qtyController,
+                      decoration: InputDecoration(labelText: 'Cant.'),
+                      keyboardType: TextInputType.number,
+                      validator: (val) => val == null || int.tryParse(val) == null || int.parse(val) < 1 ? 'Inválido' : null,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text('Cancelar')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+            onPressed: () {
+              if (_formKey.currentState!.validate()) {
+                final newItem = SaleItem(
+                  saleId: 0,
+                  productId: null, // Es manual, no en catálogo inicialmente
+                  name: _nameController.text.trim(),
+                  quantity: int.parse(_qtyController.text),
+                  unitPrice: double.parse(_priceController.text),
+                  subtotal: int.parse(_qtyController.text) * double.parse(_priceController.text),
+                  rawOcrText: 'MANUAL',
+                );
+                Provider.of<SaleProvider>(context, listen: false).addItem(newItem);
+                Navigator.pop(ctx);
+              }
+            },
+            child: Text('Añadir', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showEditDialog(BuildContext context, int index, SaleItem item) {
