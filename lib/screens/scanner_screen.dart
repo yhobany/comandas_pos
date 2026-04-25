@@ -116,19 +116,28 @@ class _ScannerScreenState extends State<ScannerScreen> {
                      icon: Icon(Icons.camera_alt, size: 30),
                      label: Padding(
                        padding: const EdgeInsets.all(12.0),
-                       child: Text('Tomar Foto', style: TextStyle(fontSize: 18)),
+                       child: Text('Tomar Foto', style: TextStyle(fontSize: 18, color: Colors.white)),
                      ),
-                     style: ElevatedButton.styleFrom(shape: StadiumBorder()),
+                     style: ElevatedButton.styleFrom(
+                       backgroundColor: Colors.deepPurple,
+                       foregroundColor: Colors.white,
+                       shape: StadiumBorder(),
+                       elevation: 2,
+                     ),
                      onPressed: () => _processImage(ImageSource.camera),
                    ),
                    SizedBox(height: 16),
                    OutlinedButton.icon(
-                     icon: Icon(Icons.photo_library),
+                     icon: Icon(Icons.photo_library, color: Colors.deepPurple),
                      label: Padding(
                        padding: const EdgeInsets.all(8.0),
-                       child: Text('Seleccionar de Galería', style: TextStyle(fontSize: 16)),
+                       child: Text('Seleccionar de Galería', style: TextStyle(fontSize: 16, color: Colors.deepPurple)),
                      ),
-                     style: OutlinedButton.styleFrom(shape: StadiumBorder()),
+                     style: OutlinedButton.styleFrom(
+                       foregroundColor: Colors.deepPurple,
+                       side: BorderSide(color: Colors.deepPurple, width: 1.5),
+                       shape: StadiumBorder(),
+                     ),
                      onPressed: () => _processImage(ImageSource.gallery),
                    ),
                    SizedBox(height: 32),
@@ -139,16 +148,17 @@ class _ScannerScreenState extends State<ScannerScreen> {
                    ),
                    SizedBox(height: 24),
                    ElevatedButton.icon(
-                     icon: Icon(Icons.edit_document),
+                     icon: Icon(Icons.edit_document, color: Colors.deepPurple.shade700),
                      label: Padding(
                        padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 8.0),
-                       child: Text('Crear Comanda Manualmente', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                       child: Text('Crear Comanda Manualmente', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                      ),
                      style: ElevatedButton.styleFrom(
-                       backgroundColor: Colors.blue.shade50,
-                       foregroundColor: Colors.blue.shade800,
+                       backgroundColor: Colors.deepPurple.shade50,
+                       foregroundColor: Colors.deepPurple.shade800,
                        elevation: 0,
                        shape: StadiumBorder(),
+                       side: BorderSide(color: Colors.deepPurple.shade100, width: 1),
                      ),
                      onPressed: () {
                        Provider.of<SaleProvider>(context, listen: false).setCurrentItems(
