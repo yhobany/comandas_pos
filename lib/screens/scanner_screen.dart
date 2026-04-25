@@ -127,6 +127,21 @@ class _ScannerScreenState extends State<ScannerScreen> {
                      label: Text('Seleccionar de Galería'),
                      onPressed: () => _processImage(ImageSource.gallery),
                    ),
+                   SizedBox(height: 24),
+                   TextButton.icon(
+                     icon: Icon(Icons.edit_document),
+                     label: Text('Crear Comanda Manualmente', style: TextStyle(fontSize: 16)),
+                     onPressed: () {
+                       Provider.of<SaleProvider>(context, listen: false).setCurrentItems(
+                         [], 
+                         parsedDate: DateTime.now(),
+                         ticketNumber: null,
+                       );
+                       Navigator.of(context).push(
+                         MaterialPageRoute(builder: (context) => ValidationScreen()),
+                       );
+                     },
+                   ),
                 ],
               ),
       ),

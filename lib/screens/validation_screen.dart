@@ -46,7 +46,22 @@ class _ValidationScreenState extends State<ValidationScreen> {
           }
           
           if (items.isEmpty) {
-            return Center(child: Text('No se detectaron productos en la comanda.'));
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.edit_note, size: 80, color: Colors.grey.shade400),
+                  SizedBox(height: 16),
+                  Text('Comanda en blanco', style: TextStyle(fontSize: 18, color: Colors.grey.shade600)),
+                  SizedBox(height: 16),
+                  ElevatedButton.icon(
+                    icon: Icon(Icons.add),
+                    label: Text('Añadir Producto Manualmente'),
+                    onPressed: () => _showAddDialog(context),
+                  )
+                ],
+              ),
+            );
           }
 
           return Column(
@@ -258,7 +273,7 @@ class _ValidationScreenState extends State<ValidationScreen> {
                   Expanded(
                     child: TextFormField(
                       controller: _priceController,
-                      decoration: InputDecoration(labelText: 'Precio Unit.', prefixText: '$'),
+                      decoration: InputDecoration(labelText: 'Precio Unit.', prefixText: '\$'),
                       keyboardType: TextInputType.number,
                       validator: (val) => val == null || double.tryParse(val) == null ? 'Inválido' : null,
                     ),

@@ -328,9 +328,13 @@ class _SaleEditScreenState extends State<SaleEditScreen> {
                                 ),
                               ),
                               // Controles +/-
-                              Row(
+                              Wrap(
+                                crossAxisAlignment: WrapCrossAlignment.center,
+                                spacing: 2,
                                 children: [
                                   IconButton(
+                                    padding: EdgeInsets.zero,
+                                    constraints: BoxConstraints(),
                                     icon: Icon(Icons.remove_circle, color: Colors.orange, size: 28),
                                     onPressed: () => _changeQuantity(index, -1),
                                   ),
@@ -341,11 +345,15 @@ class _SaleEditScreenState extends State<SaleEditScreen> {
                                         style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                                   ),
                                   IconButton(
+                                    padding: EdgeInsets.zero,
+                                    constraints: BoxConstraints(),
                                     icon: Icon(Icons.add_circle, color: Colors.green, size: 28),
                                     onPressed: () => _changeQuantity(index, 1),
                                   ),
-                                  SizedBox(width: 4),
+                                  SizedBox(width: 8),
                                   IconButton(
+                                    padding: EdgeInsets.zero,
+                                    constraints: BoxConstraints(),
                                     icon: Icon(Icons.delete_outline, color: Colors.red, size: 28),
                                     onPressed: () => _deleteItem(index),
                                   ),
