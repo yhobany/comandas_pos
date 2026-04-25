@@ -27,7 +27,16 @@ class _ProductListScreenState extends State<ProductListScreen> {
       body: Consumer<ProductProvider>(
         builder: (context, productProvider, child) {
           if (productProvider.products.isEmpty) {
-            return Center(child: Text('No hay productos registrados.'));
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.inventory_2_outlined, size: 80, color: Colors.grey.shade300),
+                  SizedBox(height: 16),
+                  Text('No hay productos registrados.', style: TextStyle(color: Colors.grey.shade600, fontSize: 16)),
+                ],
+              ),
+            );
           }
 
           final displayedProducts = _searchQuery.isEmpty 
@@ -40,15 +49,28 @@ class _ProductListScreenState extends State<ProductListScreen> {
 
           return Column(
             children: [
-              Padding(
-                padding: const EdgeInsets.all(8.0),
+              Container(
+                margin: const EdgeInsets.all(12.0),
+                decoration: BoxDecoration(
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: Offset(0, 4),
+                    )
+                  ],
+                ),
                 child: TextField(
                   decoration: InputDecoration(
                     labelText: 'Buscar por nombre o categoría...',
-                    prefixIcon: Icon(Icons.search),
+                    prefixIcon: Icon(Icons.search, color: Colors.blue.shade700),
+                    filled: true,
+                    fillColor: Colors.white,
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(15),
+                      borderSide: BorderSide.none,
                     ),
+                    contentPadding: EdgeInsets.symmetric(vertical: 0),
                   ),
                   onChanged: (value) {
                     setState(() {
@@ -58,32 +80,61 @@ class _ProductListScreenState extends State<ProductListScreen> {
                 ),
               ),
               if (displayedProducts.isEmpty)
-                Expanded(child: Center(child: Text('No se encontraron coincidencias.')))
+                Expanded(
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.inventory_2_outlined, size: 80, color: Colors.grey.shade300),
+                        SizedBox(height: 16),
+                        Text('No se encontraron coincidencias', style: TextStyle(color: Colors.grey.shade600, fontSize: 16)),
+                      ],
+                    ),
+                  ),
+                )
               else
                 Expanded(
                   child: ListView.builder(
                     itemCount: displayedProducts.length,
                     itemBuilder: (context, index) {
                       final product = displayedProducts[index];
-                      return ListTile(
-                title: Text(product.name),
-                subtitle: Text('\$${product.price.toStringAsFixed(2)} - ${product.category ?? "Sin categoría"}'),
-                trailing: IconButton(
-                icon: Icon(Icons.delete, color: Colors.red, size: 28),
-                  onPressed: () {
-                    if (product.id != null) {
-                      productProvider.deleteProduct(product.id!);
-                    }
-                  },
-                ),
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => ProductFormScreen(product: product),
-                    ),
-                  );
-                },
-              );
+                      return Card(
+                        margin: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        elevation: 1,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        child: ListTile(
+                          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                          leading: CircleAvatar(
+                            backgroundColor: Colors.blue.shade50,
+                            child: Icon(Icons.shopping_bag, color: Colors.blue.shade700),
+                          ),
+                          title: Text(product.name, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                          subtitle: Padding(
+                            padding: const EdgeInsets.only(top: 4.0),
+                            child: Row(
+                              children: [
+                                Text('\$${product.price.toStringAsFixed(2)}', style: TextStyle(color: Colors.green.shade700, fontWeight: FontWeight.bold)),
+                                Text('  •  ${product.category ?? "Sin categoría"}', style: TextStyle(color: Colors.grey.shade600)),
+                              ],
+                            ),
+                          ),
+                          trailing: IconButton(
+                            icon: Icon(Icons.delete_outline, color: Colors.red.shade400, size: 26),
+                            onPressed: () {
+                              if (product.id != null) {
+                                productProvider.deleteProduct(product.id!);
+                              }
+                            },
+                          ),
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => ProductFormScreen(product: product),
+                              ),
+                            );
+                          },
+                        ),
+                      );
             },
           ),
         ),
@@ -91,8 +142,11 @@ class _ProductListScreenState extends State<ProductListScreen> {
     );
   },
 ),
-      floatingActionButton: FloatingActionButton(
-        child: Icon(Icons.add),
+      floatingActionButton: FloatingActionButton.extended(
+        backgroundColor: Colors.blue.shade700,
+        foregroundColor: Colors.white,
+        icon: Icon(Icons.add),
+        label: Text('Nuevo Producto', style: TextStyle(fontWeight: FontWeight.bold)),
         onPressed: () {
           Navigator.of(context).push(
             MaterialPageRoute(
